@@ -1,5 +1,6 @@
-
 import sys
+from itertools import groupby
+from operator import itemgetter
 
 
 def read_mapper_output(file):
@@ -8,8 +9,9 @@ def read_mapper_output(file):
 
 
 def main():
-    keys, values = read_mapper_output(sys.stdin)
+    data = read_mapper_output(sys.stdin)
 
     number_of_items = len(set(values))
 
-    print('%s\t%s;%i', keys, number_of_items, -1)  # -1: flag to differentiate
+    for keys, values in groupby(data, itemgetter(0)):
+        print('%s\t%s;%i', keys, number_of_items, -1)  # -1: flag to differentiate

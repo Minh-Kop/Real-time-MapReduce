@@ -1,4 +1,6 @@
 import sys
+from itertools import groupby
+from operator import itemgetter
 
 
 def read_mapper_output(file):
@@ -8,27 +10,28 @@ def read_mapper_output(file):
 
 def main():
     # data = [key: string(num1;num2) , value[item1,item2,...: string]]
-    key, values = read_mapper_output(sys.stdin)
-    user1, user2 = key.split(';')
+    data = read_mapper_output(sys.stdin)
+    for key, values in groupby(data, itemgetter(0)):
+        user1, user2 = key.split(';')
 
-    I1 = 0
-    I2 = 0
-    val_copy = values.copy
+        I1 = 0
+        I2 = 0
+        val_copy = values.copy
 
-    for i in values:
-        temp = i.split(';')
-        length = len(temp)
+        for i in values:
+            temp = i.split(';')
+            length = len(temp)
 
-        if length == 2:
-            val_copy.pop(val_copy.index(i))
+            if length == 2:
+                val_copy.pop(val_copy.index(i))
 
-            if temp[1] == user1:
-                I1 = int(temp[0])
-            elif temp[1] == user2:
-                I2 = int(temp[0])
+                if temp[1] == user1:
+                    I1 = int(temp[0])
+                elif temp[1] == user2:
+                    I2 = int(temp[0])
 
-    same_item = len(val_copy) - len(set(val_copy))
-    print('%s;%s\t%i', user1, user2, I2 - same_item)
+        same_item = len(val_copy) - len(set(val_copy))
+        print('%s;%s\t%i', user1, user2, I2 - same_item)
 
 
 if __name__ == "__main__":
