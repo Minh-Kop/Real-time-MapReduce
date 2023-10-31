@@ -1,4 +1,3 @@
-
 import sys
 
 
@@ -8,10 +7,11 @@ def read_input(file):
 
 
 def main():
-    keys, _ = read_input(sys.stdin)
-    user, item = keys.strip().split(';')
+    data = read_input(sys.stdin)
+    for keys, _ in data:
+        user, item = keys.strip().split(';')
 
-    print('%s\t%s', user, item)
+        print('%s\t%s', user, item)
 
 
 if __name__ == '__main__':
