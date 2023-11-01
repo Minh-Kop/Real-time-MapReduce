@@ -31,7 +31,7 @@ def I_mapper():
     wdata.sort(key=I_sort)
 
     for i in wdata:
-        fw.writelines(f'{i['user']}\t{i['item']}\n')
+        fw.writelines(f'{i["user"]}\t{i["item"]}\n')
 
     fw.close()
 
