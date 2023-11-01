@@ -63,9 +63,17 @@
 #         outfile.write('%s;%s\t%s;%s\n' %
 #                       (items[0], items[1], items[2], items[3]))
 
-a = [{'user1:': 3, 'user2': 4, 'rating': 5}, {'user1:': 1, 'user2': 4, 'rating': 5}, {'user1:': 2,
-                                                                                      'user2': 4, 'rating': 5}, {'user1:': 3, 'user2': 4, 'rating': 4}, {'user1:': 2, 'user2': 4, 'rating': 5}]
+array = [['86', '881250949'], ['377', '878887116'],
+         ['346', '884182806'], ['86', '883603013']]
 
-b = sorted(a, key=lambda x: (x[0], x[1]))
+count = {}
+result = []
+for elem in array:
+    first_value = elem[0]
+    if first_value in count:
+        count[first_value] += 1
+        result.append(elem)
+    else:
+        count[first_value] = 1
 
-print(b)
+print(result)
