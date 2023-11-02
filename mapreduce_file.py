@@ -157,7 +157,7 @@ def Suv_reducer():
     appended_list = sorted(appended_list, key=lambda x: x[0])
 
     for i in appended_list:
-        fw.writelines('{};{}\t{}\n'.format(i[0], i[1], i[2]))
+        fw.writelines('{};{}\t{};ru\n'.format(i[0], i[1], i[2]))
 
     fw.close()
 

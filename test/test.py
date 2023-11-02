@@ -63,17 +63,21 @@
 #         outfile.write('%s;%s\t%s;%s\n' %
 #                       (items[0], items[1], items[2], items[3]))
 
-array = [['86', '881250949'], ['377', '878887116'],
-         ['346', '884182806'], ['86', '883603013']]
+# array = [['86', '881250949'], ['377', '878887116'],
+#          ['346', '884182806'], ['86', '883603013']]
+#
+# count = {}
+# result = []
+# for elem in array:
+#     first_value = elem[0]
+#     if first_value in count:
+#         count[first_value] += 1
+#         result.append(elem)
+#     else:
+#         count[first_value] = 1
+#
+# print(result)
 
-count = {}
-result = []
-for elem in array:
-    first_value = elem[0]
-    if first_value in count:
-        count[first_value] += 1
-        result.append(elem)
-    else:
-        count[first_value] = 1
-
-print(result)
+positive_infinity = float("inf")
+print(positive_infinity)
+print(1/positive_infinity)
