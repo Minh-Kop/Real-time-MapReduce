@@ -6,18 +6,18 @@ def read_file(file):
     f.close()
 
 
-def create_combinations_mapper():
-    data = read_file('../output_file.txt')
-    outputFile = open('./create_combinations_mapper.txt', 'w')
+def create_time_combinations_mapper():
+    data = read_file('../input_file.txt')
+    outputFile = open('../output/create_time_combinations_mapper.txt', 'w')
     appended_list = []
 
     # Create mapper result
     for key, value in data:
         user, item = key.strip().split(';')
         currentUser = int(user)
-        rating = value.strip().split(';')[0]
+        time = value.strip().split(';')[1]
 
-        appended_list.append([item, currentUser, rating])
+        appended_list.append([item, currentUser, time])
 
     appended_list = sorted(appended_list, key=lambda x: x[0])
 
@@ -28,4 +28,4 @@ def create_combinations_mapper():
     outputFile.close()
 
 
-create_combinations_mapper()
+create_time_combinations_mapper()

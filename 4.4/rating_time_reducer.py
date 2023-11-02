@@ -1,5 +1,6 @@
 from itertools import groupby
 from operator import itemgetter
+from math import e
 
 
 def read_mapper_output(file, separator='\t'):
@@ -9,31 +10,28 @@ def read_mapper_output(file, separator='\t'):
     file.close()
 
 
-def rating_details_reducer():
+def rating_time_reducer():
     data = read_mapper_output(
-        '../output/rating_details_mapper.txt', '\t')
-    outputFile = open('../output/rating_details_reducer.txt', 'w')
+        '../output/rating_time_mapper.txt', '\t')
+    outputFile = open('../output/rating_time_reducer.txt', 'w')
 
     # Create reducer result
     for u_v, group in groupby(data, itemgetter(0)):
         try:
             group = list(group)
             group = [i[1].rstrip().split(';') for i in group]
-            count = 0
-            liking_threshold = 3.5
+            alpha = 10**-6
+            sum = 0
 
             for line in group:
                 if (line[-1] == 'rc'):
                     continue
-                r_ui, r_vi = line[:2]
-                r_ui = float(r_ui)
-                r_vi = float(r_vi)
-                if (r_ui > liking_threshold and r_vi > liking_threshold):
-                    count += 1
-                elif (r_ui < liking_threshold and r_vi < liking_threshold):
-                    count += 1
+                t_ui, t_vi = line
+                t_ui = float(t_ui)
+                t_vi = float(t_vi)
+                sum += pow(e, -alpha * abs(t_ui - t_vi))
 
-            outputFile.writelines(f'{u_v}\t{count};rd\n')
+            outputFile.writelines(f'{u_v}\t{sum};rt\n')
         except ValueError:
             pass
 
@@ -41,4 +39,4 @@ def rating_details_reducer():
     outputFile.close()
 
 
-rating_details_reducer()
+rating_time_reducer()

@@ -10,10 +10,10 @@ def read_file(file):
 
 
 def mfps_mapper():
-    data = itertools.chain(read_file('../output/Cuv_reducer.txt'),
+    data = itertools.chain(read_file('../output/rating_commodity_reducer.txt'),
                            read_file('../output/Suv_reducer.txt'),
                            read_file('../output/rating_details_reducer.txt'),
-                           read_file('../output/Tuv_reducer.txt'))
+                           read_file('../output/rating_time_reducer.txt'))
     outputFile = open('../output/mfps_mapper.txt', 'w')
     appended_list = []
 

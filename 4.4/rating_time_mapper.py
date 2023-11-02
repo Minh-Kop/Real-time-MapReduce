@@ -9,10 +9,10 @@ def read_file(file):
     f.close()
 
 
-def rating_details_mapper():
+def rating_time_mapper():
     data = itertools.chain(read_file('../output/rating_commodity_reducer.txt'),
-                           read_file('../output/create_rating_combinations_reducer.txt'))
-    outputFile = open('../output/rating_details_mapper.txt', 'w')
+                           read_file('../output/create_time_combinations_reducer.txt'))
+    outputFile = open('../output/rating_time_mapper.txt', 'w')
     appended_list = []
 
     # Create mapper result
@@ -28,4 +28,4 @@ def rating_details_mapper():
     outputFile.close()
 
 
-rating_details_mapper()
+rating_time_mapper()
