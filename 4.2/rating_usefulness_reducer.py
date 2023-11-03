@@ -22,15 +22,13 @@ def main():
         commodity, u1, count_items_1 = group[0]
         _, u2, count_items_2 = group[1]
 
-        if u1 == user1:
-            appended_list.append(
-                [int(u1), int(u2), int(count_items_1) - int(commodity)])
-            # fw.writelines('{};{}\t{}\n'.format(u1, u2, str(int(count_items_1) - int(commodity))))
+        appended_list.append(
+            [int(u1), int(u2), int(count_items_1) - int(commodity)])
+        # fw.writelines('{};{}\t{}\n'.format(u1, u2, str(int(count_items_1) - int(commodity))))
 
-        if u2 == user2:
-            appended_list.append(
-                [int(u2), int(u1), int(count_items_2) - int(commodity)])
-            # fw.writelines('{};{}\t{}\n'.format(u2, u1, str(int(count_items_2) - int(commodity))))
+        appended_list.append(
+            [int(u2), int(u1), int(count_items_2) - int(commodity)])
+        # fw.writelines('{};{}\t{}\n'.format(u2, u1, str(int(count_items_2) - int(commodity))))
 
     appended_list = sorted(appended_list, key=lambda x: x[0])
 
