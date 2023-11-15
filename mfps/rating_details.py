@@ -17,7 +17,7 @@ class rating_details(MRJob):
     def create_rating_combinations_reducer(self, item, group):
         group = list(group)
         group = [i.rstrip().split(';') for i in group]
-        
+
         comb = combinations(group, 2)
         for u, v in comb:
             if (int(u[0]) < int(v[0])):
@@ -45,8 +45,8 @@ class rating_details(MRJob):
 
     def steps(self):
         return [
-            MRStep(
-                mapper=self.create_rating_combinations_mapper, reducer=self.create_rating_combinations_reducer),
+            MRStep(mapper=self.create_rating_combinations_mapper,
+                   reducer=self.create_rating_combinations_reducer),
             MRStep(reducer=self.rating_details_reducer),
         ]
 

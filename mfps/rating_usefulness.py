@@ -46,13 +46,13 @@ class rating_usefulness(MRJob):
         commodity, u1, count_items_1 = values[0]
         _, u2, count_items_2 = values[1]
 
-        yield f'{u1};{u2}', f'{int(count_items_1) - int(commodity)};ru'
-        yield f'{u2};{u1}', f'{int(count_items_2) - int(commodity)};ru'
+        yield f'{u1};{u2}', f'{int(count_items_2) - int(commodity)};ru'
+        yield f'{u2};{u1}', f'{int(count_items_1) - int(commodity)};ru'
 
     def steps(self):
         return [
-            MRStep(
-                mapper=self.count_items_mapper, reducer=self.count_items_reducer),
+            MRStep(mapper=self.count_items_mapper,
+                   reducer=self.count_items_reducer),
             MRStep(mapper_init=self.rating_usefulness_mapper_init,
                    mapper=self.rating_usefulness_mapper, reducer=self.rating_usefulness_reducer),
         ]

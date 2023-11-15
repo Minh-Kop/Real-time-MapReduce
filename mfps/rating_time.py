@@ -43,8 +43,8 @@ class rating_time(MRJob):
 
     def steps(self):
         return [
-            MRStep(
-                mapper=self.create_time_combinations_mapper, reducer=self.create_time_combinations_reducer),
+            MRStep(mapper=self.create_time_combinations_mapper,
+                   reducer=self.create_time_combinations_reducer),
             MRStep(reducer=self.rating_time_reducer),
         ]
 
