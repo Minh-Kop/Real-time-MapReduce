@@ -15,7 +15,6 @@ def main():
     appended_list = []
 
     for key, group in groupby(data, itemgetter(0)):
-        user1, user2 = key.strip().split(';')
         group = list(group)
         group = [i[1].rstrip().split(';') for i in group]
 
