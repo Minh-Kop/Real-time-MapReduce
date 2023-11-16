@@ -16,16 +16,6 @@ class mfps(MRJob):
             yield f'{u2};{u1}', value
         yield key, value
 
-    def mfps_combiner(self, key, values):
-        values = list(values)
-        values = [value.rstrip().split(';') for value in values]
-
-        for value, flag in values:
-            yield key, f'{value};{flag}'
-            if flag == 'rc' and value == '0':
-                yield key, f'0;rd'
-                yield key, f'0;rt'
-
     def mfps_reducer(self, key, values):
         values = list(values)
         values = [value.rstrip().split(';') for value in values]
@@ -46,8 +36,7 @@ class mfps(MRJob):
 
     def steps(self):
         return [
-            MRStep(mapper=self.mfps_mapper, combiner=self.mfps_combiner,
-                   reducer=self.mfps_reducer),
+            MRStep(mapper=self.mfps_mapper, reducer=self.mfps_reducer),
         ]
 
 

@@ -35,12 +35,12 @@ class rating_commodity(MRJob):
             elif user > currentUser:
                 yield f"{currentUser};{user}", item
 
-    def rating_commodity_reducer(self, key, value):
-        user1, user2 = key.strip().split(';')
-        value = list(value)
-        uniqueValues = set(value)
+    def rating_commodity_reducer(self, users, items):
+        user1, user2 = users.strip().split(';')
+        items = list(items)
+        uniqueItems = set(items)
 
-        yield f'{user1};{user2}', f'{len(value) - len(uniqueValues)};rc'
+        yield f'{user1};{user2}', f'{len(items) - len(uniqueItems)};rc'
 
     def steps(self):
         return [
