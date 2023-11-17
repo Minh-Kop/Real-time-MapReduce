@@ -4,14 +4,15 @@ import itertools
 def read_file(file):
     f = open(file, 'r')
     for line in f:
-        yield line.rstrip().split('\t')
+        yield line.strip().split('\t')
 
     f.close()
 
 
 def mfps_mapper():
     data = itertools.chain(read_file('../output/rating_commodity_reducer.txt'),
-                           read_file('../output/rating_usefulness_reducer.txt'),
+                           read_file(
+                               '../output/rating_usefulness_reducer.txt'),
                            read_file('../output/rating_details_reducer.txt'),
                            read_file('../output/rating_time_reducer.txt'))
     outputFile = open('../output/mfps_mapper.txt', 'w')
@@ -20,7 +21,7 @@ def mfps_mapper():
     # Create mapper result
     for key, value in data:
         u1, u2 = key.strip().split(';')
-        
+
         appended_list.append([[u1, u2], value])
         if value.strip().split(';')[-1] != 'ru':
             appended_list.append([[u2, u1], value])

@@ -5,7 +5,7 @@ from operator import itemgetter
 def read_mapper_output(file, separator='\t'):
     file = open(file, 'r')
     for line in file:
-        yield line.rstrip().split(separator)
+        yield line.strip().split(separator)
     file.close()
 
 
@@ -18,7 +18,7 @@ def rating_details_reducer():
     for u_v, group in groupby(data, itemgetter(0)):
         try:
             group = list(group)
-            group = [i[1].rstrip().split(';') for i in group]
+            group = [i[1].strip().split(';') for i in group]
             count = 0
             liking_threshold = 3.5
 

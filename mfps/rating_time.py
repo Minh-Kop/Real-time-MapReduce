@@ -10,14 +10,14 @@ class rating_time(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def create_time_combinations_mapper(self, _, line):
-        key, value = line.rstrip().split('\t')
+        key, value = line.strip().split('\t')
         user, item = key.strip().split(';')
         time = value.strip().split(';')[1]
         yield item, f'{user};{time}'
 
     def create_time_combinations_reducer(self, item, group):
         group = list(group)
-        group = [i.rstrip().split(';') for i in group]
+        group = [i.strip().split(';') for i in group]
 
         comb = combinations(group, 2)
         for u, v in comb:
@@ -28,7 +28,7 @@ class rating_time(MRJob):
 
     def rating_time_reducer(self, users, values):
         values = list(values)
-        values = [value.rstrip().split(';') for value in values]
+        values = [value.strip().split(';') for value in values]
 
         alpha = 10**-6
         sum = 0

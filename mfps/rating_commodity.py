@@ -2,7 +2,6 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import os
 
 
 class rating_commodity(MRJob):
@@ -21,12 +20,11 @@ class rating_commodity(MRJob):
         return user_ids
 
     def rating_commodity_mapper_init(self):
-        # users_path = os.path.join(os.path.dirname(__file__), 'users.txt')
         users_path = self.options.users_path
         self.users = self.create_user_list(users_path)
 
     def rating_commodity_mapper(self, _, line):
-        currentUser, item = (line.rstrip().split('\t'))[0].strip().split(';')
+        currentUser, item = (line.strip().split('\t'))[0].strip().split(';')
         currentUser = int(currentUser)
 
         for user in self.users:
@@ -50,8 +48,6 @@ class rating_commodity(MRJob):
 
 
 if __name__ == '__main__':
-    output_path = os.path.join(os.getcwd(), 'output1.txt')
-    # sys.argv.extend(['input_file.txt', '>', f'file://{output_path}'])
     sys.argv[1:] = [
         '--users-path', '../users.txt',  # Đường dẫn đến tệp users.txt
         '../input_file.txt',  # Tệp đầu vào

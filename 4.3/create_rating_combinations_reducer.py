@@ -5,7 +5,7 @@ from operator import itemgetter
 def read_mapper_output(file, separator='\t'):
     file = open(file, 'r')
     for line in file:
-        yield line.rstrip().split(separator)
+        yield line.strip().split(separator)
     file.close()
 
 
@@ -18,7 +18,7 @@ def create_rating_combinations_reducer():
     for current_item, group in groupby(data, itemgetter(0)):
         try:
             group = list(group)
-            group = [i[1].rstrip().split(';') for i in group]
+            group = [i[1].strip().split(';') for i in group]
             comb = combinations(group, 2)
             for u, v in comb:
                 if (int(u[0]) < int(v[0])):

@@ -9,14 +9,14 @@ class rating_details(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def create_rating_combinations_mapper(self, _, line):
-        key, value = line.rstrip().split('\t')
+        key, value = line.strip().split('\t')
         user, item = key.strip().split(';')
         rating = value.strip().split(';')[0]
         yield item, f'{user};{rating}'
 
     def create_rating_combinations_reducer(self, item, group):
         group = list(group)
-        group = [i.rstrip().split(';') for i in group]
+        group = [i.strip().split(';') for i in group]
 
         comb = combinations(group, 2)
         for u, v in comb:
@@ -27,7 +27,7 @@ class rating_details(MRJob):
 
     def rating_details_reducer(self, users, values):
         values = list(values)
-        values = [value.rstrip().split(';') for value in values]
+        values = [value.strip().split(';') for value in values]
 
         count = 0
         liking_threshold = 3.5

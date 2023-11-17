@@ -9,24 +9,26 @@ class rating_usefulness(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def count_items_mapper(self, _, line):
-        key, _ = line.rstrip().split('\t')
+        key, _ = line.strip().split('\t')
         user, item = key.strip().split(';')
         yield user, item
 
     def count_items_reducer(self, user, items):
-        length = len(list(items))
-        yield user, f'{length}'
+        items_counted = len(list(items))
+        yield user, f'{items_counted}'
 
     def read_file(self, filename):
         arr = []
         with open(filename, 'r') as file:
             for line in file:
-                arr.append(line.rstrip().split('\t'))
+                arr.append(line.strip().split('\t'))
         return arr
 
     def rating_usefulness_mapper_init(self):
         rating_commodity_path = os.path.join(os.path.dirname(
-            __file__), 'rating_commodity.txt')
+            __file__), '1.txt')
+        # rating_commodity_path = os.path.join(os.path.dirname(
+        #     __file__), 'rating_commodity.txt')
         self.rating_commodity = self.read_file(rating_commodity_path)
 
     def rating_usefulness_mapper(self, user, items_counted):
@@ -34,14 +36,12 @@ class rating_usefulness(MRJob):
             u1, u2 = key.strip().split(';')
             commodity = value.strip().split(';')[0]
 
-            if (u1 == user):
-                yield f'{u1};{u2}', f'{commodity};{u1};{items_counted}'
-            if (u2 == user):
-                yield f'{u1};{u2}', f'{commodity};{u2};{items_counted}'
+            if (user == u1 or user == u2):
+                yield f'{u1};{u2}', f'{commodity};{user};{items_counted}'
 
     def rating_usefulness_reducer(self, key, values):
         values = list(values)
-        values = [value.rstrip().split(';') for value in values]
+        values = [value.strip().split(';') for value in values]
 
         commodity, u1, count_items_1 = values[0]
         _, u2, count_items_2 = values[1]

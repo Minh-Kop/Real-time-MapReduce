@@ -1,12 +1,12 @@
 # def read_input(file):
 #     for line in file:
-#         yield line.rstrip().split('\t')
+#         yield line.strip().split('\t')
 
 
 def read_file(file):
     f = open(file, 'r')
     for line in f:
-        yield line.rstrip().split('\t')
+        yield line.strip().split('\t')
 
     f.close()
 

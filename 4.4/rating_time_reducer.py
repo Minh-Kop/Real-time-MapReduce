@@ -6,7 +6,7 @@ from math import e
 def read_mapper_output(file, separator='\t'):
     file = open(file, 'r')
     for line in file:
-        yield line.rstrip().split(separator)
+        yield line.strip().split(separator)
     file.close()
 
 
@@ -19,7 +19,7 @@ def rating_time_reducer():
     for u_v, group in groupby(data, itemgetter(0)):
         try:
             group = list(group)
-            group = [i[1].rstrip().split(';') for i in group]
+            group = [i[1].strip().split(';') for i in group]
             alpha = 10**-6
             sum = 0
 

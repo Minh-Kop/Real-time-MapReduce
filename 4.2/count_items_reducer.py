@@ -5,7 +5,7 @@ from operator import itemgetter
 def read_mapper_output(file, separator='\t'):
     file = open(file, 'r')
     for line in file:
-        yield line.rstrip().split(separator)
+        yield line.strip().split(separator)
     file.close()
 
 
