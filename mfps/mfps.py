@@ -40,15 +40,10 @@ class mfps(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        # './rating_*.txt',  # Tệp đầu vào
-        # './rating_commodity.txt',  # Tệp đầu vào
-        # './rating_usefulness.txt',  # Tệp đầu vào
-        # './rating_details.txt',  # Tệp đầu vào
-        # './rating_time.txt',  # Tệp đầu vào
-        './1.txt',
-        './2.txt',
-        './3.txt',
-        './4.txt',
+        './rating_commodity.txt',  # Tệp đầu vào
+        './rating_usefulness.txt',  # Tệp đầu vào
+        './rating_details.txt',  # Tệp đầu vào
+        './rating_time.txt',  # Tệp đầu vào
         # '--output', 'output1.txt'  # Tệp đầu ra
     ]
     mfps().run()

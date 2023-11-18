@@ -26,9 +26,7 @@ class rating_usefulness(MRJob):
 
     def rating_usefulness_mapper_init(self):
         rating_commodity_path = os.path.join(os.path.dirname(
-            __file__), '1.txt')
-        # rating_commodity_path = os.path.join(os.path.dirname(
-        #     __file__), 'rating_commodity.txt')
+            __file__), 'rating_commodity.txt')
         self.rating_commodity = self.read_file(rating_commodity_path)
 
     def rating_usefulness_mapper(self, user, items_counted):
