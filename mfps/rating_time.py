@@ -2,29 +2,16 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-from itertools import combinations
 from math import e
 
 
 class rating_time(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
-    def create_time_combinations_mapper(self, _, line):
-        key, value = line.strip().split('\t')
-        user, item = key.strip().split(';')
-        time = value.strip().split(';')[1]
-        yield item, f'{user};{time}'
-
-    def create_time_combinations_reducer(self, item, group):
-        group = list(group)
-        group = [i.strip().split(';') for i in group]
-
-        comb = combinations(group, 2)
-        for u, v in comb:
-            if (int(u[0]) < int(v[0])):
-                yield f'{u[0]};{v[0]}', f'{u[1]};{v[1]}'
-            else:
-                yield f'{v[0]};{u[0]}', f'{v[1]};{u[1]}'
+    def rating_time_mapper(self, _, line):
+        users, value = line.strip().split('\t')
+        time = value.strip().split('|')[1]
+        yield users, time
 
     def rating_time_reducer(self, users, values):
         values = list(values)
@@ -43,15 +30,14 @@ class rating_time(MRJob):
 
     def steps(self):
         return [
-            MRStep(mapper=self.create_time_combinations_mapper,
-                   reducer=self.create_time_combinations_reducer),
-            MRStep(reducer=self.rating_time_reducer),
+            MRStep(mapper=self.rating_time_mapper,
+                   reducer=self.rating_time_reducer),
         ]
 
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        '../input_file.txt',  # Tệp đầu vào
+        './create_combinations.txt',  # Tệp đầu vào
         # '--output', 'output1.txt'  # Tệp đầu ra
     ]
     rating_time().run()

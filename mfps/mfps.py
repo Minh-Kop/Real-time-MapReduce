@@ -12,7 +12,7 @@ class mfps(MRJob):
         key, value = line.strip().split('\t')
         u1, u2 = key.strip().split(';')
 
-        if value.strip().split(';')[-1] != 'ru':
+        if value.strip().split(';')[-1] == 'rc' or value.strip().split(';')[-1] == 'rt':
             yield f'{u2};{u1}', value
         yield key, value
 
@@ -23,9 +23,12 @@ class mfps(MRJob):
 
         for line in values:
             sim = float(line[0])
+            flag = line[-1]
             if (sim == 0):
-                mfps = 0
-                break
+                if flag == 'rc':
+                    mfps = 0
+                    break
+                continue
             mfps += 1 / sim
         if mfps:
             mfps = 1 / mfps
