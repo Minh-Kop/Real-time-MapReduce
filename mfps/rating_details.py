@@ -42,7 +42,6 @@ class rating_details(MRJob):
         values = [value.strip().split(';') for value in values]
 
         count = 0
-        liking_threshold = 3.5
 
         for line in values:
             liking_threshold, user1_rating, user2_rating = line
