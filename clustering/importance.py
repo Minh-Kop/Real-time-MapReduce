@@ -20,7 +20,7 @@ class Importance(MRJob):
         types_of_rating = len(set(rating))
         user_importance = numbers_of_rating + types_of_rating
 
-        yield user, str(user_importance)
+        yield user, f'{user_importance}'
 
     def steps(self):
         return [
