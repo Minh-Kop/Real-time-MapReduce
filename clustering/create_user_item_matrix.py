@@ -4,7 +4,7 @@ from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class create_user_item_matrix(MRJob):
+class UserItemMatrix(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def create_user_item_matrix_mapper(self, _, line):
@@ -15,7 +15,7 @@ class create_user_item_matrix(MRJob):
         yield user, f"{item};{rating}"
 
     def configure_args(self):
-        super(create_user_item_matrix, self).configure_args()
+        super(UserItemMatrix, self).configure_args()
         self.add_file_arg('--items-path', help='Path to the items file')
         self.add_file_arg('--avg-ratings-path',
                           help='Path to the avg ratings file')
@@ -76,6 +76,5 @@ if __name__ == '__main__':
         '../input_file.txt',
         '--items-path', 'items.txt',
         '--avg-ratings-path', 'calculate_avg_rating.txt',
-        # '--output', 'output1.txt'  # Tệp đầu ra
     ]
-    create_user_item_matrix().run()
+    UserItemMatrix().run()

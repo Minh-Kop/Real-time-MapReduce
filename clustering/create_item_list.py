@@ -4,7 +4,7 @@ from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class create_item_list(MRJob):
+class ItemList(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def create_item_list_mapper(self, _, line):
@@ -27,6 +27,5 @@ class create_item_list(MRJob):
 if __name__ == '__main__':
     sys.argv[1:] = [
         '../input_file.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
     ]
-    create_item_list().run()
+    ItemList().run()

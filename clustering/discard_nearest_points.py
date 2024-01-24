@@ -2,7 +2,6 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import os
 
 
 class AvgRating(MRJob):
