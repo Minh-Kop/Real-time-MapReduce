@@ -56,6 +56,6 @@ class DistanceBetweenUsersCentroid(MRJob):
 if __name__ == '__main__':
     sys.argv[1:] = [
         './output/user_item_matrix.txt',
-        '--first-centroid-path', './output/first_centroid.txt',
+        '--first-centroid-path', './output/centroids.txt',
     ]
     DistanceBetweenUsersCentroid().run()

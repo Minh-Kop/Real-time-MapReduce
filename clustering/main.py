@@ -4,11 +4,12 @@ from create_item_list import ItemList
 from calculate_avg_rating import AvgRating
 from create_user_item_matrix import UserItemMatrix
 from create_importance import Importance
-from find_most_importance import MostImportance
+from get_max import GetMax
 from create_first_centroid import FirstCentroid
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from calculate_M_nearest_points import MNearestPoints
 from discard_nearest_points import DiscardNearestPoints
+from calculate_scaling import Scaling
 
 if __name__ == '__main__':
     # Create item list
@@ -54,7 +55,7 @@ if __name__ == '__main__':
         output_file.close()
 
     # Find most importance
-    mr_job = MostImportance(args=[
+    mr_job = GetMax(args=[
         './output/importances.txt',
     ])
     with mr_job.make_runner() as runner:
@@ -132,6 +133,52 @@ if __name__ == '__main__':
     with mr_job.make_runner() as runner:
         runner.run()
         output_file = open('./output/importances.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Get max F
+    mr_job = GetMax(args=[
+        './output/importances.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/max_F.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Scaling F
+    mr_job = Scaling(args=[
+        './output/importances.txt',
+        '--max-value-path', './output/max_F.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/new_F.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Get max min_D
+    mr_job = GetMax(args=[
+        './output/min_D.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/max_min_D.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Scaling min_D
+    mr_job = Scaling(args=[
+        './output/min_D.txt',
+        '--max-value-path', './output/max_min_D.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/new_min_D.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
