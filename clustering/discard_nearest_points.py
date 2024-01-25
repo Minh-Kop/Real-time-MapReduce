@@ -19,6 +19,7 @@ class DiscardNearestPoints(MRJob):
             for line in file:
                 user, _ = line.strip().split('\t')
                 nearest_point_list.append(float(user))
+            file.close()
         return nearest_point_list
 
     def discard_nearest_points_mapper_init(self):
