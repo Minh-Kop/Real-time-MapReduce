@@ -8,6 +8,7 @@ from find_most_importance import MostImportance
 from create_first_centroid import FirstCentroid
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from calculate_M_nearest_points import MNearestPoints
+from discard_nearest_points import DiscardNearestPoints
 
 if __name__ == '__main__':
     # Create item list
@@ -69,7 +70,7 @@ if __name__ == '__main__':
         pass
     users_file.close()
 
-    M = int(number_of_users/4/1.5)
+    M = int(number_of_users/4/1.5) + 1
 
     output_file = open('./output/number_of_discard_points.txt', 'w')
     output_file.writelines(f'{M}')
@@ -107,6 +108,30 @@ if __name__ == '__main__':
     with mr_job.make_runner() as runner:
         runner.run()
         output_file = open('./output/M_nearest_points.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Discard nearest points in user-item matrix
+    mr_job = DiscardNearestPoints(args=[
+        './output/user_item_matrix.txt',
+        '--nearest-points-path', './output/M_nearest_points.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/user_item_matrix.txt', 'w')
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            output_file.writelines(f'{key}\t{value}')
+        output_file.close()
+
+    # Discard nearest points in F
+    mr_job = DiscardNearestPoints(args=[
+        './output/importances.txt',
+        '--nearest-points-path', './output/M_nearest_points.txt',
+    ])
+    with mr_job.make_runner() as runner:
+        runner.run()
+        output_file = open('./output/importances.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()

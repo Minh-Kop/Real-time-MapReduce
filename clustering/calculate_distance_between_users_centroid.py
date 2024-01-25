@@ -32,8 +32,6 @@ class DistanceBetweenUsersCentroid(MRJob):
             first_centroid_path)
 
     def distance_between_users_centroid_reducer(self, user, value):
-        if user == self.first_centroid_id:
-            return
         value = list(value)[0].strip().split('|')
         value = [el.strip().split(';') for el in value]
         coordinate = np.array(value, dtype='f')

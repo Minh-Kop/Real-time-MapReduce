@@ -43,8 +43,7 @@ class MNearestPoints(MRJob):
             return
 
         # Get top M values in sorted array
-        nearest_points = sorted_distances[-M:]
-
+        nearest_points = sorted_distances[:M]
         for user, distance in nearest_points:
             yield f'{user}', f'{distance}'
 
