@@ -98,7 +98,8 @@ if __name__ == '__main__':
         pass
     users_file.close()
 
-    M = int(number_of_users/4/1.5) + 1
+    # M = int(number_of_users/4/1.5) + 1
+    M = 3
 
     output_file = open('./output/number_of_discard_points.txt', 'w')
     output_file.writelines(f'{M}')
@@ -156,6 +157,14 @@ if __name__ == '__main__':
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
 
+        with open('./output/D.txt', 'r') as first, open(f'./output1/pre_D{i + 1}.txt', 'w') as second:
+            for line in first:
+                second.writelines(line)
+
+        with open('./output/F.txt', 'r') as first, open(f'./output1/pre_F{i + 1}.txt', 'w') as second:
+            for line in first:
+                second.writelines(line)
+
         # Get max F
         mr_job = GetMax(args=[
             './output/F.txt',
@@ -190,7 +199,7 @@ if __name__ == '__main__':
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
 
-        # Scaling min_D
+        # Scaling D
         mr_job = Scaling(args=[
             './output/D.txt',
             '--max-value-path', './output/max_D.txt',
@@ -236,6 +245,18 @@ if __name__ == '__main__':
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
+
+        with open('./output/D.txt', 'r') as first, open(f'./output1/post_D{i + 1}.txt', 'w') as second:
+            for line in first:
+                second.writelines(line)
+
+        with open('./output/F.txt', 'r') as first, open(f'./output1/post_F{i + 1}.txt', 'w') as second:
+            for line in first:
+                second.writelines(line)
+
+        with open('./output/F_D.txt', 'r') as first, open(f'./output1/F_D{i + 1}.txt', 'w') as second:
+            for line in first:
+                second.writelines(line)
 
         # Calculate M nearest points
         mr_job = MNearestPoints(args=[
