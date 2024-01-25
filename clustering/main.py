@@ -51,18 +51,18 @@ if __name__ == '__main__':
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/importances.txt', 'w')
+        output_file = open('./output/F.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
     # Find most importance
     mr_job = GetMax(args=[
-        './output/importances.txt',
+        './output/F.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/most_importance.txt', 'w')
+        output_file = open('./output/max_F.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
@@ -70,11 +70,11 @@ if __name__ == '__main__':
     # Create first centroid
     mr_job = FirstCentroid(args=[
         './output/user_item_matrix.txt',
-        './output/most_importance.txt',
+        './output/max_F.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/first_centroid.txt', 'w')
+        output_file = open('./output/centroids.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # Calculate distance between users and centroid
     mr_job = DistanceBetweenUsersCentroid(args=[
         './output/user_item_matrix.txt',
-        '--first-centroid-path', './output/first_centroid.txt'
+        '--first-centroid-path', './output/centroids.txt'
     ])
     with mr_job.make_runner() as runner:
         runner.run()
@@ -129,19 +129,19 @@ if __name__ == '__main__':
 
     # Discard nearest points in F
     mr_job = DiscardNearestPoints(args=[
-        './output/importances.txt',
+        './output/F.txt',
         '--nearest-points-path', './output/M_nearest_points.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/importances.txt', 'w')
+        output_file = open('./output/F.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
     # Get max F
     mr_job = GetMax(args=[
-        './output/importances.txt',
+        './output/F.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
@@ -152,35 +152,35 @@ if __name__ == '__main__':
 
     # Scaling F
     mr_job = Scaling(args=[
-        './output/importances.txt',
+        './output/F.txt',
         '--max-value-path', './output/max_F.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/new_F.txt', 'w')
+        output_file = open('./output/F.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
     # Get max min_D
     mr_job = GetMax(args=[
-        './output/min_D.txt',
+        './output/D.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/max_min_D.txt', 'w')
+        output_file = open('./output/max_D.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
     # Scaling min_D
     mr_job = Scaling(args=[
-        './output/min_D.txt',
-        '--max-value-path', './output/max_min_D.txt',
+        './output/D.txt',
+        '--max-value-path', './output/max_D.txt',
     ])
     with mr_job.make_runner() as runner:
         runner.run()
-        output_file = open('./output/new_min_D.txt', 'w')
+        output_file = open('./output/D.txt', 'w')
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
