@@ -79,7 +79,7 @@ if __name__ == '__main__':
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
-    # Calculate distance between users and centroid
+    # Calculate distance between users and first centroid
     mr_job = DistanceBetweenUsersCentroid(args=[
         './output/user_item_matrix.txt',
         '--first-centroid-path', './output/centroids.txt'
@@ -139,48 +139,63 @@ if __name__ == '__main__':
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
-    # Get max F
-    mr_job = GetMax(args=[
-        './output/F.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/max_F.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    for i in range(number_of_clusters - 1):
+        print(i)
 
-    # Scaling F
-    mr_job = Scaling(args=[
-        './output/F.txt',
-        '--max-value-path', './output/max_F.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/F.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+        # Calculate distance between users and centroids
+        mr_job = DistanceBetweenUsersCentroid(args=[
+            './output/user_item_matrix.txt',
+            '--first-centroid-path', './output/centroids.txt'
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/D.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
 
-    # Get max min_D
-    mr_job = GetMax(args=[
-        './output/D.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/max_D.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+        # Get max F
+        mr_job = GetMax(args=[
+            './output/F.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/max_F.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
 
-    # Scaling min_D
-    mr_job = Scaling(args=[
-        './output/D.txt',
-        '--max-value-path', './output/max_D.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/D.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+        # Scaling F
+        mr_job = Scaling(args=[
+            './output/F.txt',
+            '--max-value-path', './output/max_F.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/F.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Get max min_D
+        mr_job = GetMax(args=[
+            './output/D.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/max_D.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Scaling min_D
+        mr_job = Scaling(args=[
+            './output/D.txt',
+            '--max-value-path', './output/max_D.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/D.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
