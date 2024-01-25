@@ -10,6 +10,7 @@ from calculate_distance_between_users_centroid import DistanceBetweenUsersCentro
 from calculate_M_nearest_points import MNearestPoints
 from discard_nearest_points import DiscardNearestPoints
 from calculate_scaling import Scaling
+from calculate_sum_F_D import SumFD
 
 number_of_clusters = 3
 
@@ -139,6 +140,7 @@ if __name__ == '__main__':
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
+    # Loop
     for i in range(number_of_clusters - 1):
         print(i)
 
@@ -196,6 +198,29 @@ if __name__ == '__main__':
         with mr_job.make_runner() as runner:
             runner.run()
             output_file = open('./output/D.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Calculate sum F, D
+        mr_job = SumFD(args=[
+            './output/F.txt',
+            './output/D.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/F_D.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Calculate max F_D
+        mr_job = GetMax(args=[
+            './output/F_D.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/max_F_D.txt', 'w')
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
