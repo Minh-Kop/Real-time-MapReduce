@@ -4,9 +4,6 @@ from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 import numpy as np
 
-first_centroid_id = '1'
-first_centroid_value = '1'
-
 
 class DistanceBetweenUsersCentroid(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
@@ -21,29 +18,33 @@ class DistanceBetweenUsersCentroid(MRJob):
         yield f'{user}', f'{value}'
 
     def getInitCentroid(self, filename):
-        f = open(filename, 'r')
-        user = f.readline().strip().split('\t')
-        f.close()
-        return user
+        centroids = {}
+        with open(filename, 'r') as file:
+            for line in file:
+                centroid, centroid_value = line.strip().split('\t')
+                centroid_value = centroid_value.strip().split('|')
+                centroid_value = [el.strip().split(';')
+                                  for el in centroid_value]
+                centroids[centroid] = np.array(centroid_value, dtype='f')
+            file.close()
+        return centroids
 
     def distance_between_users_centroid_reducer_init(self):
-        first_centroid_path = self.options.first_centroid_path
-        self.first_centroid_id, self.first_centroid_value = self.getInitCentroid(
-            first_centroid_path)
+        self.centroids = self.getInitCentroid(self.options.first_centroid_path)
 
     def distance_between_users_centroid_reducer(self, user, value):
         value = list(value)[0].strip().split('|')
         value = [el.strip().split(';') for el in value]
         coordinate = np.array(value, dtype='f')
+        distances = np.array([])
 
-        centroid_value = self.first_centroid_value
-        centroid_value = centroid_value.strip().split('|')
-        centroid_value = [el.strip().split(';') for el in centroid_value]
-        centroid_coordinate = np.array(centroid_value, dtype='f')
+        for centroid, centroid_coordinate in self.centroids.items():
+            euclidean_distance = abs(np.linalg.norm(
+                centroid_coordinate - coordinate))
+            distances = np.append(distances, euclidean_distance)
+        min_euclidean_distance = np.amin(distances)
 
-        euclidean_distance = abs(np.linalg.norm(
-            centroid_coordinate - coordinate))
-        yield user, f'{euclidean_distance}'
+        yield user, f'{min_euclidean_distance}'
 
     def steps(self):
         return [

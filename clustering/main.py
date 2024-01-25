@@ -11,6 +11,8 @@ from calculate_M_nearest_points import MNearestPoints
 from discard_nearest_points import DiscardNearestPoints
 from calculate_scaling import Scaling
 
+number_of_clusters = 3
+
 if __name__ == '__main__':
     # Create item list
     mr_job = ItemList(args=['../input_file.txt'])
@@ -65,18 +67,6 @@ if __name__ == '__main__':
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
 
-    # Calculate number of discard points
-    users_file = open('../users.txt', 'r')
-    for number_of_users, line in enumerate(users_file, start=1):
-        pass
-    users_file.close()
-
-    M = int(number_of_users/4/1.5) + 1
-
-    output_file = open('./output/number_of_discard_points.txt', 'w')
-    output_file.writelines(f'{M}')
-    output_file.close()
-
     # Create first centroid
     mr_job = FirstCentroid(args=[
         './output/user_item_matrix.txt',
@@ -100,6 +90,18 @@ if __name__ == '__main__':
         for key, value in mr_job.parse_output(runner.cat_output()):
             output_file.writelines(f'{key}\t{value}')
         output_file.close()
+
+    # Calculate number of discard points
+    users_file = open('../users.txt', 'r')
+    for number_of_users, line in enumerate(users_file, start=1):
+        pass
+    users_file.close()
+
+    M = int(number_of_users/4/1.5) + 1
+
+    output_file = open('./output/number_of_discard_points.txt', 'w')
+    output_file.writelines(f'{M}')
+    output_file.close()
 
     # Calculate M nearest points
     mr_job = MNearestPoints(args=[
