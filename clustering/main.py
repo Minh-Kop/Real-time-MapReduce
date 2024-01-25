@@ -98,8 +98,7 @@ if __name__ == '__main__':
         pass
     users_file.close()
 
-    # M = int(number_of_users/4/1.5) + 1
-    M = 3
+    M = int(number_of_users/4/1.5) + 1
 
     output_file = open('./output/number_of_discard_points.txt', 'w')
     output_file.writelines(f'{M}')
@@ -156,14 +155,6 @@ if __name__ == '__main__':
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
-
-        with open('./output/D.txt', 'r') as first, open(f'./output1/pre_D{i + 1}.txt', 'w') as second:
-            for line in first:
-                second.writelines(line)
-
-        with open('./output/F.txt', 'r') as first, open(f'./output1/pre_F{i + 1}.txt', 'w') as second:
-            for line in first:
-                second.writelines(line)
 
         # Get max F
         mr_job = GetMax(args=[
@@ -246,21 +237,9 @@ if __name__ == '__main__':
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
 
-        with open('./output/D.txt', 'r') as first, open(f'./output1/post_D{i + 1}.txt', 'w') as second:
-            for line in first:
-                second.writelines(line)
-
-        with open('./output/F.txt', 'r') as first, open(f'./output1/post_F{i + 1}.txt', 'w') as second:
-            for line in first:
-                second.writelines(line)
-
-        with open('./output/F_D.txt', 'r') as first, open(f'./output1/F_D{i + 1}.txt', 'w') as second:
-            for line in first:
-                second.writelines(line)
-
         # Calculate M nearest points
         mr_job = MNearestPoints(args=[
-            './output/max_F_D.txt',
+            './output/F_D.txt',
             '--m-path', './output/number_of_discard_points.txt',
         ])
         with mr_job.make_runner() as runner:
@@ -278,9 +257,14 @@ if __name__ == '__main__':
         with mr_job.make_runner() as runner:
             runner.run()
             output_file = open('./output/user_item_matrix.txt', 'w')
+            count = 0
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
+                count += 1
             output_file.close()
+            if count == 0:
+                print('Break')
+                break
 
         # Discard nearest points in F
         mr_job = DiscardNearestPoints(args=[
