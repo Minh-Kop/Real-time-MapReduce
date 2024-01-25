@@ -224,3 +224,51 @@ if __name__ == '__main__':
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
+
+        # Create another centroid
+        mr_job = FirstCentroid(args=[
+            './output/user_item_matrix.txt',
+            './output/max_F_D.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/centroids.txt', 'a')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Calculate M nearest points
+        mr_job = MNearestPoints(args=[
+            './output/max_F_D.txt',
+            '--m-path', './output/number_of_discard_points.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/M_nearest_points.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Discard nearest points in user-item matrix
+        mr_job = DiscardNearestPoints(args=[
+            './output/user_item_matrix.txt',
+            '--nearest-points-path', './output/M_nearest_points.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/user_item_matrix.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
+
+        # Discard nearest points in F
+        mr_job = DiscardNearestPoints(args=[
+            './output/F.txt',
+            '--nearest-points-path', './output/M_nearest_points.txt',
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/F.txt', 'w')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                output_file.writelines(f'{key}\t{value}')
+            output_file.close()
