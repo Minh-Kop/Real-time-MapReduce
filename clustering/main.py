@@ -14,83 +14,56 @@ from calculate_sum_F_D import SumFD
 
 number_of_clusters = 3
 
+
+def run_mr_job(mr_job_class, input_args):
+    mr_job = mr_job_class(args=input_args)
+    with mr_job.make_runner() as runner:
+        runner.run()
+        data = []
+        for key, value in mr_job.parse_output(runner.cat_output()):
+            data.append(f'{key}\t{value}')
+        return data
+
+
+def write_data_to_file(filename, data, mode='w'):
+    output_file = open(filename, mode)
+    for el in data:
+        output_file.writelines(el)
+    output_file.close()
+
+
 if __name__ == '__main__':
     # Create item list
-    mr_job = ItemList(args=['../input_file.txt'])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/items.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(ItemList, ['../input_file.txt'])
+    write_data_to_file('./output/items.txt', result_data)
 
     # Calculate average rating
-    mr_job = AvgRating(args=['../input_file.txt'])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/avg_ratings.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(AvgRating, ['../input_file.txt'])
+    write_data_to_file('./output/avg_ratings.txt', result_data)
 
     # Create user-item matrix
-    mr_job = UserItemMatrix(args=[
-        '../input_file.txt',
-        '--items-path', './output/items.txt',
-        '--avg-ratings-path', './output/avg_ratings.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/user_item_matrix.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(UserItemMatrix, ['../input_file.txt',
+                                              '--items-path', './output/items.txt',
+                                              '--avg-ratings-path', './output/avg_ratings.txt'])
+    write_data_to_file('./output/user_item_matrix.txt', result_data)
 
     # Calculate importance
-    mr_job = Importance(args=[
-        '../input_file.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/F.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(Importance, ['../input_file.txt'])
+    write_data_to_file('./output/F.txt', result_data)
 
     # Find most importance
-    mr_job = GetMax(args=[
-        './output/F.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/max_F.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(GetMax, ['./output/F.txt'])
+    write_data_to_file('./output/max_F.txt', result_data)
 
     # Create first centroid
-    mr_job = FirstCentroid(args=[
-        './output/user_item_matrix.txt',
-        './output/max_F.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/centroids.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(
+        FirstCentroid, ['./output/user_item_matrix.txt', './output/max_F.txt'])
+    write_data_to_file('./output/centroids.txt', result_data)
 
     # Calculate distance between users and first centroid
-    mr_job = DistanceBetweenUsersCentroid(args=[
-        './output/user_item_matrix.txt',
-        '--first-centroid-path', './output/centroids.txt'
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/D.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
+                                                            '--first-centroid-path', './output/centroids.txt'])
+    write_data_to_file('./output/D.txt', result_data)
 
     # Calculate number of discard points
     users_file = open('../users.txt', 'r')
@@ -99,198 +72,86 @@ if __name__ == '__main__':
     users_file.close()
 
     M = int(number_of_users/4/1.5) + 1
-
-    output_file = open('./output/number_of_discard_points.txt', 'w')
-    output_file.writelines(f'{M}')
-    output_file.close()
+    write_data_to_file('./output/number_of_discard_points.txt', [str(M)])
 
     # Calculate M nearest points
-    mr_job = MNearestPoints(args=[
-        './output/D.txt',
-        '--m-path', './output/number_of_discard_points.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/M_nearest_points.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(MNearestPoints, ['./output/D.txt',
+                                              '--m-path', './output/number_of_discard_points.txt',])
+    write_data_to_file('./output/M_nearest_points.txt', result_data)
 
     # Discard nearest points in user-item matrix
-    mr_job = DiscardNearestPoints(args=[
-        './output/user_item_matrix.txt',
-        '--nearest-points-path', './output/M_nearest_points.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/user_item_matrix.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
+                                                    '--nearest-points-path', './output/M_nearest_points.txt'])
+    write_data_to_file('./output/user_item_matrix.txt', result_data)
 
     # Discard nearest points in F
-    mr_job = DiscardNearestPoints(args=[
-        './output/F.txt',
-        '--nearest-points-path', './output/M_nearest_points.txt',
-    ])
-    with mr_job.make_runner() as runner:
-        runner.run()
-        output_file = open('./output/F.txt', 'w')
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            output_file.writelines(f'{key}\t{value}')
-        output_file.close()
+    result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
+                                                    '--nearest-points-path', './output/M_nearest_points.txt'])
+    write_data_to_file('./output/F.txt', result_data)
 
     # Loop
     for i in range(number_of_clusters - 1):
         print(i)
 
         # Calculate distance between users and centroids
-        mr_job = DistanceBetweenUsersCentroid(args=[
-            './output/user_item_matrix.txt',
-            '--first-centroid-path', './output/centroids.txt'
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/D.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
+                                                                '--first-centroid-path', './output/centroids.txt'])
+        write_data_to_file('./output/D.txt', result_data)
 
         # Get max F
-        mr_job = GetMax(args=[
-            './output/F.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/max_F.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(GetMax, ['./output/F.txt'])
+        write_data_to_file('./output/max_F.txt', result_data)
 
         # Scaling F
-        mr_job = Scaling(args=[
-            './output/F.txt',
-            '--max-value-path', './output/max_F.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/F.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(
+            Scaling, ['./output/F.txt', '--max-value-path', './output/max_F.txt'])
+        write_data_to_file('./output/F.txt', result_data)
 
         # Get max min_D
-        mr_job = GetMax(args=[
-            './output/D.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/max_D.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(GetMax, ['./output/D.txt'])
+        write_data_to_file('./output/max_D.txt', result_data)
 
         # Scaling D
-        mr_job = Scaling(args=[
-            './output/D.txt',
-            '--max-value-path', './output/max_D.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/D.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(Scaling, ['./output/D.txt',
+                                           '--max-value-path', './output/max_D.txt'])
+        write_data_to_file('./output/D.txt', result_data)
 
         # Calculate sum F, D
-        mr_job = SumFD(args=[
-            './output/F.txt',
-            './output/D.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/F_D.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(SumFD, ['./output/F.txt', './output/D.txt'])
+        write_data_to_file('./output/F_D.txt', result_data)
 
         # Calculate max F_D
-        mr_job = GetMax(args=[
-            './output/F_D.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/max_F_D.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(
+            GetMax, ['./output/F_D.txt'])
+        write_data_to_file('./output/max_F_D.txt', result_data)
 
         # Create another centroid
-        mr_job = FirstCentroid(args=[
-            './output/user_item_matrix.txt',
-            './output/max_F_D.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            new_centroid_file = open('./output/new_centroid.txt', 'w')
-            output_file = open('./output/centroids.txt', 'a')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                new_centroid_file.writelines(f'{key}\t{value}')
-                output_file.writelines(f'{key}\t{value}')
-            new_centroid_file.close()
-            output_file.close()
+        result_data = run_mr_job(FirstCentroid, ['./output/user_item_matrix.txt',
+                                                 './output/max_F_D.txt'])
+        write_data_to_file('./output/new_centroid.txt', result_data)
+        write_data_to_file('./output/centroids.txt', result_data, mode='a')
 
         # Calculate distance between new centroid and other users
-        mr_job = DistanceBetweenUsersCentroid(args=[
-            './output/user_item_matrix.txt',
-            '--first-centroid-path', './output/new_centroid.txt'
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/D_.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
+                                                                '--first-centroid-path', './output/new_centroid.txt'])
+        write_data_to_file('./output/D_.txt', result_data)
 
         # Calculate M nearest points
-        mr_job = MNearestPoints(args=[
-            './output/D_.txt',
-            '--m-path', './output/number_of_discard_points.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/M_nearest_points.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(MNearestPoints, ['./output/D_.txt',
+                                                  '--m-path', './output/number_of_discard_points.txt'])
+        write_data_to_file('./output/M_nearest_points.txt', result_data)
 
         # Discard nearest points in user-item matrix
-        mr_job = DiscardNearestPoints(args=[
-            './output/user_item_matrix.txt',
-            '--nearest-points-path', './output/M_nearest_points.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/user_item_matrix.txt', 'w')
-            count = 0
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-                count += 1
-            output_file.close()
-            if count == 0:
-                print('Break')
-                break
+        result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
+                                                        '--nearest-points-path', './output/M_nearest_points.txt'])
+        write_data_to_file('./output/user_item_matrix.txt', result_data)
+        if result_data == []:
+            print('Break')
+            break
 
         # Discard nearest points in F
-        mr_job = DiscardNearestPoints(args=[
-            './output/F.txt',
-            '--nearest-points-path', './output/M_nearest_points.txt',
-        ])
-        with mr_job.make_runner() as runner:
-            runner.run()
-            output_file = open('./output/F.txt', 'w')
-            for key, value in mr_job.parse_output(runner.cat_output()):
-                output_file.writelines(f'{key}\t{value}')
-            output_file.close()
+        result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
+                                                        '--nearest-points-path', './output/M_nearest_points.txt'])
+        write_data_to_file('./output/F.txt', result_data)
 
     # Kmeans
