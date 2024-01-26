@@ -232,14 +232,29 @@ if __name__ == '__main__':
         ])
         with mr_job.make_runner() as runner:
             runner.run()
+            new_centroid_file = open('./output/new_centroid.txt', 'w')
             output_file = open('./output/centroids.txt', 'a')
+            for key, value in mr_job.parse_output(runner.cat_output()):
+                new_centroid_file.writelines(f'{key}\t{value}')
+                output_file.writelines(f'{key}\t{value}')
+            new_centroid_file.close()
+            output_file.close()
+
+        # Calculate distance between new centroid and other users
+        mr_job = DistanceBetweenUsersCentroid(args=[
+            './output/user_item_matrix.txt',
+            '--first-centroid-path', './output/new_centroid.txt'
+        ])
+        with mr_job.make_runner() as runner:
+            runner.run()
+            output_file = open('./output/D_.txt', 'w')
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
 
         # Calculate M nearest points
         mr_job = MNearestPoints(args=[
-            './output/F_D.txt',
+            './output/D_.txt',
             '--m-path', './output/number_of_discard_points.txt',
         ])
         with mr_job.make_runner() as runner:
@@ -277,3 +292,5 @@ if __name__ == '__main__':
             for key, value in mr_job.parse_output(runner.cat_output()):
                 output_file.writelines(f'{key}\t{value}')
             output_file.close()
+
+    # Kmeans
