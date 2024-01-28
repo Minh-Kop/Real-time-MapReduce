@@ -12,6 +12,7 @@ from discard_nearest_points import DiscardNearestPoints
 from calculate_scaling import Scaling
 from calculate_sum_F_D import SumFD
 from update_centroids import UpdateCentroids
+from label import Label
 
 number_of_clusters = 3
 
@@ -157,8 +158,11 @@ if __name__ == '__main__':
         write_data_to_file('./output/F.txt', result_data)
 
     # KMeans
-    first_time = True
+    count = 1
     while True:
+        print(f'\nLoop {count}')
+        count += 1
+
         # Calculate distance between users and centroids
         result_data = run_mr_job(DistanceBetweenUsersCentroid, ['../user_item_matrix.txt',
                                                                 '--first-centroid-path', './output/centroids.txt',
@@ -170,22 +174,21 @@ if __name__ == '__main__':
                                  './output/user_item_matrix.txt'])
         write_data_to_file('./output/new_centroids.txt', result_data)
 
-        if not first_time:
-            with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/old_centroids.txt', 'w') as old_centroids:
-                for line in new_centroids:
-                    key, value = line.strip().split('\t')
-                    new_centroids_tuples = [tuple(value.strip().split('|'))]
-                for line in old_centroids:
-                    key, value = line.strip().split('\t')
-                    old_centroids_tuples = [tuple(value.strip().split('|'))]
+        # Check if has converged
+        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'r') as old_centroids:
+            for line in new_centroids:
+                key, value = line.strip().split('\t')
+                new_centroids_tuples = [tuple(value.strip().split('|'))]
+            for line in old_centroids:
+                key, value = line.strip().split('\t')
+                old_centroids_tuples = [tuple(value.strip().split('|'))]
 
-                if set(new_centroids_tuples) == set(old_centroids_tuples):
-                    break
+            if set(new_centroids_tuples) == set(old_centroids_tuples):
+                break
 
-        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/old_centroids.txt', 'w') as old_centroids:
+        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'w') as old_centroids:
             for line in new_centroids:
                 old_centroids.write(line)
 
-        first_time = False
-
-        break
+    result_data = run_mr_job(Label, ['./output/user_item_matrix.txt'])
+    write_data_to_file('./output/labels.txt', result_data)

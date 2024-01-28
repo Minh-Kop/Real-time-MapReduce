@@ -26,7 +26,7 @@ class UserItemMatrix(MRJob):
             for line in file:
                 # item = line.strip(' \t\n')
                 item = line.strip()  # Remove leading/trailing whitespaces and newlines
-                items.append(int(item))
+                items.append(float(item))
         return items
 
     def create_avg_ratings(self, filename):
@@ -53,7 +53,7 @@ class UserItemMatrix(MRJob):
             found = False
             for value in values:
                 user_item, rating = value
-                user_item = int(user_item)
+                user_item = float(user_item)
                 if user_item == item:
                     result += f"{item};{rating}"
                     found = True
