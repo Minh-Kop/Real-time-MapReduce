@@ -157,6 +157,7 @@ if __name__ == '__main__':
         write_data_to_file('./output/F.txt', result_data)
 
     # KMeans
+    first_time = True
     while True:
         # Calculate distance between users and centroids
         result_data = run_mr_job(DistanceBetweenUsersCentroid, ['../user_item_matrix.txt',
@@ -168,5 +169,23 @@ if __name__ == '__main__':
         result_data = run_mr_job(UpdateCentroids, [
                                  './output/user_item_matrix.txt'])
         write_data_to_file('./output/new_centroids.txt', result_data)
+
+        if not first_time:
+            with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/old_centroids.txt', 'w') as old_centroids:
+                for line in new_centroids:
+                    key, value = line.strip().split('\t')
+                    new_centroids_tuples = [tuple(value.strip().split('|'))]
+                for line in old_centroids:
+                    key, value = line.strip().split('\t')
+                    old_centroids_tuples = [tuple(value.strip().split('|'))]
+
+                if set(new_centroids_tuples) == set(old_centroids_tuples):
+                    break
+
+        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/old_centroids.txt', 'w') as old_centroids:
+            for line in new_centroids:
+                old_centroids.write(line)
+
+        first_time = False
 
         break
