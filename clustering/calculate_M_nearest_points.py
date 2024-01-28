@@ -14,6 +14,8 @@ class MNearestPoints(MRJob):
             '--m-path', help='Path to number of discard points file')
 
     def calculate_M_nearest_points_mapper(self, _, line):
+        # user, value = line.strip().split('\t')
+        # distance = value.strip().split(';')[0]
         user, distance = line.strip().split('\t')
         yield None, f'{user};{distance}'
 

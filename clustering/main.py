@@ -11,6 +11,7 @@ from calculate_M_nearest_points import MNearestPoints
 from discard_nearest_points import DiscardNearestPoints
 from calculate_scaling import Scaling
 from calculate_sum_F_D import SumFD
+from update_centroids import UpdateCentroids
 
 number_of_clusters = 3
 
@@ -46,6 +47,7 @@ if __name__ == '__main__':
                                               '--items-path', './output/items.txt',
                                               '--avg-ratings-path', './output/avg_ratings.txt'])
     write_data_to_file('./output/user_item_matrix.txt', result_data)
+    write_data_to_file('../user_item_matrix.txt', result_data)
 
     # Calculate importance
     result_data = run_mr_job(Importance, ['../input_file.txt'])
@@ -154,4 +156,17 @@ if __name__ == '__main__':
                                                         '--nearest-points-path', './output/M_nearest_points.txt'])
         write_data_to_file('./output/F.txt', result_data)
 
-    # Kmeans
+    # KMeans
+    while True:
+        # Calculate distance between users and centroids
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['../user_item_matrix.txt',
+                                                                '--first-centroid-path', './output/centroids.txt',
+                                                                '--return-centroid-id', 'True'])
+        write_data_to_file('./output/user_item_matrix.txt', result_data)
+
+        # Update centroids
+        result_data = run_mr_job(UpdateCentroids, [
+                                 './output/user_item_matrix.txt'])
+        write_data_to_file('./output/new_centroids.txt', result_data)
+
+        break
