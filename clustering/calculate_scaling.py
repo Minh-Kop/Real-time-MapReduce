@@ -2,7 +2,6 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import numpy as np
 
 
 class Scaling(MRJob):
@@ -21,7 +20,6 @@ class Scaling(MRJob):
         with open(filename, 'r') as file:
             line = file.readline()
             _, value_max = line.strip().split('\t')
-            file.close()
 
         return value_max
 

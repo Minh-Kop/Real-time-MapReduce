@@ -35,9 +35,9 @@ def write_data_to_file(filename, data, mode='w'):
 
 
 if __name__ == '__main__':
-    # Create item list
-    result_data = run_mr_job(ItemList, ['../input_file.txt'])
-    write_data_to_file('./output/items.txt', result_data)
+    # # Create item list
+    # result_data = run_mr_job(ItemList, ['../input_file.txt'])
+    # write_data_to_file('./output/items.txt', result_data)
 
     # Calculate average rating
     result_data = run_mr_job(AvgRating, ['../input_file.txt'])
@@ -45,8 +45,8 @@ if __name__ == '__main__':
 
     # Create user-item matrix
     result_data = run_mr_job(UserItemMatrix, ['../input_file.txt',
-                                              '--items-path', './output/items.txt',
-                                              '--avg-ratings-path', './output/avg_ratings.txt'])
+                                              './output/avg_ratings.txt',
+                                              '--items-path', './output/items.txt'])
     write_data_to_file('./output/user_item_matrix.txt', result_data)
     write_data_to_file('../user_item_matrix.txt', result_data)
 
@@ -63,12 +63,7 @@ if __name__ == '__main__':
         FirstCentroid, ['./output/user_item_matrix.txt', './output/max_F.txt'])
     write_data_to_file('./output/centroids.txt', result_data)
 
-    # Calculate distance between users and first centroid
-    result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
-                                                            '--first-centroid-path', './output/centroids.txt'])
-    write_data_to_file('./output/D.txt', result_data)
-
-    # Calculate number of discard points
+    # Calculate number of discarded points
     users_file = open('../users.txt', 'r')
     for number_of_users, line in enumerate(users_file, start=1):
         pass
@@ -76,6 +71,11 @@ if __name__ == '__main__':
 
     M = int(number_of_users/4/1.5) + 1
     write_data_to_file('./output/number_of_discard_points.txt', [str(M)])
+
+    # Calculate distance between users and first centroid
+    result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
+                                                            '--first-centroid-path', './output/centroids.txt'])
+    write_data_to_file('./output/D.txt', result_data)
 
     # Calculate M nearest points
     result_data = run_mr_job(MNearestPoints, ['./output/D.txt',
@@ -186,9 +186,11 @@ if __name__ == '__main__':
             if set(new_centroids_tuples) == set(old_centroids_tuples):
                 break
 
+        # Save new centroids to file
         with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'w') as old_centroids:
             for line in new_centroids:
                 old_centroids.write(line)
 
+    # Assign labels
     result_data = run_mr_job(Label, ['./output/user_item_matrix.txt'])
     write_data_to_file('./output/labels.txt', result_data)

@@ -37,7 +37,6 @@ class DistanceBetweenUsersCentroid(MRJob):
                 centroids = np.append(centroids, centroid_coordinate)
 
                 col_num = centroid_coordinate.size
-            file.close()
         centroids = centroids.reshape(-1, col_num)
         return centroid_ids, centroids
 

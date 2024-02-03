@@ -2,6 +2,7 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
+import numpy as np
 
 
 class UserItemMatrix(MRJob):
@@ -9,7 +10,11 @@ class UserItemMatrix(MRJob):
 
     def create_user_item_matrix_mapper(self, _, line):
         key, value = line.strip().split('\t')
-        user, item = key.strip().split(';')
+        key = key.strip().split(';')
+        if (len(key) == 1):
+            yield key[0], value
+            return
+        user, item = key
         rating = value.strip().split(';')[0]
 
         yield user, f"{item};{rating}"
@@ -17,8 +22,6 @@ class UserItemMatrix(MRJob):
     def configure_args(self):
         super(UserItemMatrix, self).configure_args()
         self.add_file_arg('--items-path', help='Path to the items file')
-        self.add_file_arg('--avg-ratings-path',
-                          help='Path to the avg ratings file')
 
     def create_item_list(self, filename):
         items = []
@@ -29,39 +32,35 @@ class UserItemMatrix(MRJob):
                 items.append(float(item))
         return items
 
-    def create_avg_ratings(self, filename):
-        avg_ratings = {}
-        with open(filename, 'r') as file:
-            for line in file:
-                user, avg_rating = line.strip().split('\t')
-                avg_rating = float(avg_rating)
-                avg_ratings[user] = avg_rating
-        return avg_ratings
-
     def create_user_item_matrix_reducer_init(self):
         items_path = self.options.items_path
-        avg_ratings_path = self.options.avg_ratings_path
         self.items = self.create_item_list(items_path)
-        self.avg_ratings = self.create_avg_ratings(avg_ratings_path)
 
     def create_user_item_matrix_reducer(self, user, values):
         values = [value.strip().split(';') for value in values]
-        avg_rating = self.avg_ratings[user]
-        result = ''
+        values = np.array(values, dtype='object')
+        # Find rows with length 1
+        rows_to_remove = np.array([len(row) == 1 for row in values])
 
+        # Use boolean indexing to create a new array with rows of length 1
+        removed_rows = values[rows_to_remove]
+        avg_rating = removed_rows[0][0]
+
+        # Use boolean indexing to remove rows from the original array
+        values = values[~rows_to_remove]
+        values = np.vstack(values).astype(np.float)
+
+        result = []
         for item in self.items:
             found = False
-            for value in values:
-                user_item, rating = value
-                user_item = float(user_item)
-                if user_item == item:
-                    result += f"{item};{rating}"
+            for user_item, rating in values:
+                if float(user_item) == item:
+                    result.append(f"{item};{rating}")
                     found = True
                     break
             if not found:
-                result += f"{item};{avg_rating}"
-            result += '|'
-        result = result[:-1]
+                result.append(f"{item};{avg_rating}")
+        result = '|'.join(result)
         yield user, result
 
     def steps(self):
