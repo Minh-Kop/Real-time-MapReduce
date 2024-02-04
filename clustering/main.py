@@ -5,7 +5,7 @@ from calculate_avg_rating import AvgRating
 from create_user_item_matrix import UserItemMatrix
 from create_importance import Importance
 from get_max import GetMax
-from create_first_centroid import FirstCentroid
+from create_centroid import CreateCentroid
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from calculate_M_nearest_points import MNearestPoints
 from discard_nearest_points import DiscardNearestPoints
@@ -59,8 +59,8 @@ if __name__ == '__main__':
     write_data_to_file('./output/max_F.txt', result_data)
 
     # Create first centroid
-    result_data = run_mr_job(
-        FirstCentroid, ['./output/user_item_matrix.txt', './output/max_F.txt'])
+    result_data = run_mr_job(CreateCentroid, ['./output/user_item_matrix.txt',
+                                              './output/max_F.txt'])
     write_data_to_file('./output/centroids.txt', result_data)
 
     # Calculate number of discarded points
@@ -70,7 +70,6 @@ if __name__ == '__main__':
     users_file.close()
 
     M = int(number_of_users/4/1.5) + 1
-    write_data_to_file('./output/number_of_discard_points.txt', [str(M)])
 
     # Calculate distance between users and first centroid
     result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
@@ -79,17 +78,17 @@ if __name__ == '__main__':
 
     # Calculate M nearest points
     result_data = run_mr_job(MNearestPoints, ['./output/D.txt',
-                                              '--m-path', './output/number_of_discard_points.txt',])
+                                              '--m', str(M)])
     write_data_to_file('./output/M_nearest_points.txt', result_data)
 
     # Discard nearest points in user-item matrix
     result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
-                                                    '--nearest-points-path', './output/M_nearest_points.txt'])
+                                                    './output/M_nearest_points.txt'])
     write_data_to_file('./output/user_item_matrix.txt', result_data)
 
     # Discard nearest points in F
     result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
-                                                    '--nearest-points-path', './output/M_nearest_points.txt'])
+                                                    './output/M_nearest_points.txt'])
     write_data_to_file('./output/F.txt', result_data)
 
     # Loop
@@ -129,8 +128,8 @@ if __name__ == '__main__':
         write_data_to_file('./output/max_F_D.txt', result_data)
 
         # Create another centroid
-        result_data = run_mr_job(FirstCentroid, ['./output/user_item_matrix.txt',
-                                                 './output/max_F_D.txt'])
+        result_data = run_mr_job(CreateCentroid, ['./output/user_item_matrix.txt',
+                                                  './output/max_F_D.txt'])
         write_data_to_file('./output/new_centroid.txt', result_data)
         write_data_to_file('./output/centroids.txt', result_data, mode='a')
 
@@ -141,20 +140,20 @@ if __name__ == '__main__':
 
         # Calculate M nearest points
         result_data = run_mr_job(MNearestPoints, ['./output/D_.txt',
-                                                  '--m-path', './output/number_of_discard_points.txt'])
+                                                  '--m', str(M)])
         write_data_to_file('./output/M_nearest_points.txt', result_data)
 
         # Discard nearest points in user-item matrix
         result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
-                                                        '--nearest-points-path', './output/M_nearest_points.txt'])
-        write_data_to_file('./output/user_item_matrix.txt', result_data)
+                                                        './output/M_nearest_points.txt'])
         if result_data == []:
             print('Break')
             break
+        write_data_to_file('./output/user_item_matrix.txt', result_data)
 
         # Discard nearest points in F
         result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
-                                                        '--nearest-points-path', './output/M_nearest_points.txt'])
+                                                        './output/M_nearest_points.txt'])
         write_data_to_file('./output/F.txt', result_data)
 
     # KMeans

@@ -10,25 +10,11 @@ class MNearestPoints(MRJob):
 
     def configure_args(self):
         super(MNearestPoints, self).configure_args()
-        self.add_file_arg(
-            '--m-path', help='Path to number of discard points file')
+        self.add_passthru_arg('--m', type=int, default=1)
 
     def calculate_M_nearest_points_mapper(self, _, line):
-        # user, value = line.strip().split('\t')
-        # distance = value.strip().split(';')[0]
         user, distance = line.strip().split('\t')
         yield None, f'{user};{distance}'
-
-    def create_M(self, filename):
-        M = 0
-        with open(filename, 'r') as file:
-            for line in file:
-                M = int(line.strip())
-        return M
-
-    def calculate_M_nearest_points_reducer_init(self):
-        m_path = self.options.m_path
-        self.M = self.create_M(m_path)
 
     def calculate_M_nearest_points_reducer(self, _, distances):
         distances = [line.strip().split(';') for line in distances]
@@ -40,7 +26,7 @@ class MNearestPoints(MRJob):
         # Use the indices to sort the array
         sorted_distances = distances[indices]
 
-        M = self.M
+        M = self.options.m
         if (M == 0):
             return
 
@@ -52,7 +38,6 @@ class MNearestPoints(MRJob):
     def steps(self):
         return [
             MRStep(mapper=self.calculate_M_nearest_points_mapper,
-                   reducer_init=self.calculate_M_nearest_points_reducer_init,
                    reducer=self.calculate_M_nearest_points_reducer),
         ]
 

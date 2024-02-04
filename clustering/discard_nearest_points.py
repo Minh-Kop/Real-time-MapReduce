@@ -2,38 +2,24 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import numpy as np
 
 
 class DiscardNearestPoints(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
-    def configure_args(self):
-        super(DiscardNearestPoints, self).configure_args()
-        self.add_file_arg(
-            '--nearest-points-path', help='Path to M nearest points file')
-
-    def create_nearest_point_list(self, filename):
-        nearest_point_list = []
-        with open(filename, 'r') as file:
-            for line in file:
-                user, _ = line.strip().split('\t')
-                nearest_point_list.append(float(user))
-        return nearest_point_list
-
-    def discard_nearest_points_mapper_init(self):
-        self.nearest_point_list = np.array(
-            self.create_nearest_point_list(self.options.nearest_points_path), dtype='i')
-
     def discard_nearest_points_mapper(self, _, line):
         user, value = line.strip().split('\t')
-        if not np.isin(int(user), self.nearest_point_list):
-            yield user, value
+        yield f'{int(float(user))}', value
+
+    def discard_nearest_points_reducer(self, user, values):
+        values = list(values)
+        if (len(values) == 1):
+            yield user, values[0]
 
     def steps(self):
         return [
-            MRStep(mapper_init=self.discard_nearest_points_mapper_init,
-                   mapper=self.discard_nearest_points_mapper,),
+            MRStep(mapper=self.discard_nearest_points_mapper,
+                   reducer=self.discard_nearest_points_reducer)
         ]
 
 

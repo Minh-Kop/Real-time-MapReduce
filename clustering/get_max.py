@@ -10,7 +10,7 @@ class GetMax(MRJob):
 
     def get_max_mapper(self, _, line):
         user, value = line.strip().split('\t')
-        yield 'max', f'{user};{value}'
+        yield None, f'{user};{value}'
 
     def get_max_reducer(self, _, values):
         values = [line.strip().split(';') for line in values]

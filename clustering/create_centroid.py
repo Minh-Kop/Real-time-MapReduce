@@ -4,25 +4,26 @@ from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class FirstCentroid(MRJob):
+class CreateCentroid(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
-    def create_first_centroid_mapper(self, _, line):
+    def create_centroid_mapper(self, _, line):
         user, value = line.strip().split('\t')
         yield user, value
 
-    def create_first_centroid_reducer(self, user, values):
+    def create_centroid_reducer(self, user, values):
         values = list(values)
         if (len(values) > 1):
             for value in values:
-                temp_value = value.strip().split(';')
-                if (len(temp_value) > 1):
+                value = value.strip()
+                if (len(value.split('|')) > 1):
                     yield user, value
+                    return
 
     def steps(self):
         return [
-            MRStep(mapper=self.create_first_centroid_mapper,
-                   reducer=self.create_first_centroid_reducer)
+            MRStep(mapper=self.create_centroid_mapper,
+                   reducer=self.create_centroid_reducer)
         ]
 
 
@@ -32,4 +33,4 @@ if __name__ == '__main__':
         './most_importance.txt',
         # '--output', 'output1.txt'  # Tệp đầu ra
     ]
-    FirstCentroid().run()
+    CreateCentroid().run()
