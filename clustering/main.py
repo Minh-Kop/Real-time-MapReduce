@@ -169,19 +169,23 @@ if __name__ == '__main__':
         write_data_to_file('./output/user_item_matrix.txt', result_data)
 
         # Update centroids
-        result_data = run_mr_job(UpdateCentroids, [
-                                 './output/user_item_matrix.txt'])
+        result_data = run_mr_job(
+            UpdateCentroids, ['./output/user_item_matrix.txt'])
         write_data_to_file('./output/new_centroids.txt', result_data)
 
         # Check if has converged
         with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'r') as old_centroids:
+            new_centroids_tuples = []
+            old_centroids_tuples = []
             for line in new_centroids:
                 key, value = line.strip().split('\t')
-                new_centroids_tuples = [tuple(value.strip().split('|'))]
+                new_centroids_tuples.append(tuple(value.strip().split('|')))
             for line in old_centroids:
                 key, value = line.strip().split('\t')
-                old_centroids_tuples = [tuple(value.strip().split('|'))]
+                old_centroids_tuples.append(tuple(value.strip().split('|')))
 
+            new_centroids_tuples = tuple(new_centroids_tuples)
+            old_centroids_tuples = tuple(old_centroids_tuples)
             if set(new_centroids_tuples) == set(old_centroids_tuples):
                 break
 
