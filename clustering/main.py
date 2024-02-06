@@ -1,4 +1,4 @@
-import numpy as np
+import os
 
 from create_item_list import ItemList
 from calculate_avg_rating import AvgRating
@@ -15,6 +15,11 @@ from update_centroids import UpdateCentroids
 from label import Label
 
 number_of_clusters = 3
+
+
+def create_path(filename):
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(current_directory, filename)
 
 
 def run_mr_job(mr_job_class, input_args):
@@ -36,35 +41,37 @@ def write_data_to_file(filename, data, mode='w'):
 
 if __name__ == '__main__':
     # # Create item list
-    # result_data = run_mr_job(ItemList, ['../input_file.txt'])
-    # write_data_to_file('./output/items.txt', result_data)
+    # result_data = run_mr_job(ItemList, [create_path('../input_file.txt')])
+    # write_data_to_file(create_path('./output/items.txt'), result_data)
 
     # Calculate average rating
-    result_data = run_mr_job(AvgRating, ['../input_file.txt'])
-    write_data_to_file('./output/avg_ratings.txt', result_data)
+    result_data = run_mr_job(AvgRating, [create_path('../input_file.txt')])
+    write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
 
     # Create user-item matrix
-    result_data = run_mr_job(UserItemMatrix, ['../input_file.txt',
-                                              './output/avg_ratings.txt',
-                                              '--items-path', './output/items.txt'])
-    write_data_to_file('./output/user_item_matrix.txt', result_data)
-    write_data_to_file('../user_item_matrix.txt', result_data)
+    result_data = run_mr_job(UserItemMatrix, [create_path('../input_file.txt'),
+                                              create_path(
+                                                  './output/avg_ratings.txt'),
+                                              '--items-path', create_path('./output/items.txt')])
+    write_data_to_file(create_path(
+        './output/user_item_matrix.txt'), result_data)
+    write_data_to_file(create_path('../user_item_matrix.txt'), result_data)
 
     # Calculate importance
-    result_data = run_mr_job(Importance, ['../input_file.txt'])
-    write_data_to_file('./output/F.txt', result_data)
+    result_data = run_mr_job(Importance, [create_path('../input_file.txt')])
+    write_data_to_file(create_path('./output/F.txt'), result_data)
 
     # Find most importance
-    result_data = run_mr_job(GetMax, ['./output/F.txt'])
-    write_data_to_file('./output/max_F.txt', result_data)
+    result_data = run_mr_job(GetMax, [create_path('./output/F.txt')])
+    write_data_to_file(create_path('./output/max_F.txt'), result_data)
 
     # Create first centroid
-    result_data = run_mr_job(CreateCentroid, ['./output/user_item_matrix.txt',
-                                              './output/max_F.txt'])
-    write_data_to_file('./output/centroids.txt', result_data)
+    result_data = run_mr_job(CreateCentroid, [create_path('./output/user_item_matrix.txt'),
+                                              create_path('./output/max_F.txt')])
+    write_data_to_file(create_path('./output/centroids.txt'), result_data)
 
     # Calculate number of discarded points
-    users_file = open('../users.txt', 'r')
+    users_file = open(create_path('../users.txt'), 'r')
     for number_of_users, line in enumerate(users_file, start=1):
         pass
     users_file.close()
@@ -72,89 +79,96 @@ if __name__ == '__main__':
     M = int(number_of_users/4/1.5) + 1
 
     # Calculate distance between users and first centroid
-    result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
-                                                            '--first-centroid-path', './output/centroids.txt'])
-    write_data_to_file('./output/D.txt', result_data)
+    result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('./output/user_item_matrix.txt'),
+                                                            '--first-centroid-path', create_path('./output/centroids.txt')])
+    write_data_to_file(create_path('./output/D.txt'), result_data)
 
     # Calculate M nearest points
-    result_data = run_mr_job(MNearestPoints, ['./output/D.txt',
+    result_data = run_mr_job(MNearestPoints, [create_path('./output/D.txt'),
                                               '--m', str(M)])
-    write_data_to_file('./output/M_nearest_points.txt', result_data)
+    write_data_to_file(create_path(
+        './output/M_nearest_points.txt'), result_data)
 
     # Discard nearest points in user-item matrix
-    result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
-                                                    './output/M_nearest_points.txt'])
-    write_data_to_file('./output/user_item_matrix.txt', result_data)
+    result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
+                                                    create_path('./output/M_nearest_points.txt')])
+    write_data_to_file(create_path(
+        './output/user_item_matrix.txt'), result_data)
 
     # Discard nearest points in F
-    result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
-                                                    './output/M_nearest_points.txt'])
-    write_data_to_file('./output/F.txt', result_data)
+    result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/F.txt'),
+                                                    create_path('./output/M_nearest_points.txt')])
+    write_data_to_file(create_path('./output/F.txt'), result_data)
 
     # Loop
     for i in range(number_of_clusters - 1):
         print(i)
 
         # Calculate distance between users and centroids
-        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
-                                                                '--first-centroid-path', './output/centroids.txt'])
-        write_data_to_file('./output/D.txt', result_data)
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('./output/user_item_matrix.txt'),
+                                                                '--first-centroid-path', create_path('./output/centroids.txt')])
+        write_data_to_file(create_path('./output/D.txt'), result_data)
 
         # Get max F
-        result_data = run_mr_job(GetMax, ['./output/F.txt'])
-        write_data_to_file('./output/max_F.txt', result_data)
+        result_data = run_mr_job(GetMax, [create_path('./output/F.txt')])
+        write_data_to_file(create_path('./output/max_F.txt'), result_data)
 
         # Scaling F
         result_data = run_mr_job(
-            Scaling, ['./output/F.txt', '--max-value-path', './output/max_F.txt'])
-        write_data_to_file('./output/F.txt', result_data)
+            Scaling, [create_path('./output/F.txt'), '--max-value-path', create_path('./output/max_F.txt')])
+        write_data_to_file(create_path('./output/F.txt'), result_data)
 
         # Get max min_D
-        result_data = run_mr_job(GetMax, ['./output/D.txt'])
-        write_data_to_file('./output/max_D.txt', result_data)
+        result_data = run_mr_job(GetMax, [create_path('./output/D.txt')])
+        write_data_to_file(create_path('./output/max_D.txt'), result_data)
 
         # Scaling D
-        result_data = run_mr_job(Scaling, ['./output/D.txt',
-                                           '--max-value-path', './output/max_D.txt'])
-        write_data_to_file('./output/D.txt', result_data)
+        result_data = run_mr_job(Scaling, [create_path('./output/D.txt'),
+                                           '--max-value-path', create_path('./output/max_D.txt')])
+        write_data_to_file(create_path('./output/D.txt'), result_data)
 
         # Calculate sum F, D
-        result_data = run_mr_job(SumFD, ['./output/F.txt', './output/D.txt'])
-        write_data_to_file('./output/F_D.txt', result_data)
+        result_data = run_mr_job(
+            SumFD, [create_path('./output/F.txt'), create_path('./output/D.txt')])
+        write_data_to_file(create_path('./output/F_D.txt'), result_data)
 
         # Calculate max F_D
         result_data = run_mr_job(
-            GetMax, ['./output/F_D.txt'])
-        write_data_to_file('./output/max_F_D.txt', result_data)
+            GetMax, [create_path('./output/F_D.txt')])
+        write_data_to_file(create_path('./output/max_F_D.txt'), result_data)
 
         # Create another centroid
-        result_data = run_mr_job(CreateCentroid, ['./output/user_item_matrix.txt',
-                                                  './output/max_F_D.txt'])
-        write_data_to_file('./output/new_centroid.txt', result_data)
-        write_data_to_file('./output/centroids.txt', result_data, mode='a')
+        result_data = run_mr_job(CreateCentroid, [create_path('./output/user_item_matrix.txt'),
+                                                  create_path('./output/max_F_D.txt')])
+        write_data_to_file(create_path(
+            './output/new_centroid.txt'), result_data)
+        write_data_to_file(create_path(
+            './output/centroids.txt'), result_data, mode='a')
 
         # Calculate distance between new centroid and other users
-        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['./output/user_item_matrix.txt',
-                                                                '--first-centroid-path', './output/new_centroid.txt'])
-        write_data_to_file('./output/D_.txt', result_data)
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('./output/user_item_matrix.txt'),
+                                                                '--first-centroid-path', create_path('./output/new_centroid.txt')])
+        write_data_to_file(create_path('./output/D_.txt'), result_data)
 
         # Calculate M nearest points
-        result_data = run_mr_job(MNearestPoints, ['./output/D_.txt',
+        result_data = run_mr_job(MNearestPoints, [create_path('./output/D_.txt'),
                                                   '--m', str(M)])
-        write_data_to_file('./output/M_nearest_points.txt', result_data)
+        write_data_to_file(create_path(
+            './output/M_nearest_points.txt'), result_data)
 
         # Discard nearest points in user-item matrix
-        result_data = run_mr_job(DiscardNearestPoints, ['./output/user_item_matrix.txt',
-                                                        './output/M_nearest_points.txt'])
+        result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
+                                                        create_path('./output/M_nearest_points.txt')])
         if result_data == []:
             print('Break')
             break
-        write_data_to_file('./output/user_item_matrix.txt', result_data)
+        write_data_to_file(create_path(
+            './output/user_item_matrix.txt'), result_data)
 
         # Discard nearest points in F
-        result_data = run_mr_job(DiscardNearestPoints, ['./output/F.txt',
-                                                        './output/M_nearest_points.txt'])
-        write_data_to_file('./output/F.txt', result_data)
+        result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/F.txt'),
+                                                        create_path('./output/M_nearest_points.txt')])
+        write_data_to_file(create_path('./output/F.txt'), result_data)
 
     # KMeans
     count = 1
@@ -163,18 +177,20 @@ if __name__ == '__main__':
         count += 1
 
         # Calculate distance between users and centroids
-        result_data = run_mr_job(DistanceBetweenUsersCentroid, ['../user_item_matrix.txt',
-                                                                '--first-centroid-path', './output/centroids.txt',
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('../user_item_matrix.txt'),
+                                                                '--first-centroid-path', create_path(
+                                                                    './output/centroids.txt'),
                                                                 '--return-centroid-id', 'True'])
-        write_data_to_file('./output/user_item_matrix.txt', result_data)
+        write_data_to_file(create_path(
+            './output/user_item_matrix.txt'), result_data)
 
         # Update centroids
         result_data = run_mr_job(
-            UpdateCentroids, ['./output/user_item_matrix.txt'])
-        write_data_to_file('./output/new_centroids.txt', result_data)
+            UpdateCentroids, [create_path('./output/user_item_matrix.txt')])
+        write_data_to_file(create_path('./output/new_centroids.txt'), result_data)
 
         # Check if has converged
-        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'r') as old_centroids:
+        with open(create_path('./output/new_centroids.txt'), 'r') as new_centroids, open(create_path('./output/centroids.txt'), 'r') as old_centroids:
             new_centroids_tuples = []
             old_centroids_tuples = []
             for line in new_centroids:
@@ -190,10 +206,11 @@ if __name__ == '__main__':
                 break
 
         # Save new centroids to file
-        with open('./output/new_centroids.txt', 'r') as new_centroids, open('./output/centroids.txt', 'w') as old_centroids:
+        with open(create_path('./output/new_centroids.txt'), 'r') as new_centroids, open(create_path('./output/centroids.txt'), 'w') as old_centroids:
             for line in new_centroids:
                 old_centroids.write(line)
 
     # Assign labels
-    result_data = run_mr_job(Label, ['./output/user_item_matrix.txt'])
-    write_data_to_file('./output/labels.txt', result_data)
+    result_data = run_mr_job(
+        Label, [create_path('./output/user_item_matrix.txt')])
+    write_data_to_file(create_path('./output/labels.txt'), result_data)

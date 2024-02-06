@@ -34,7 +34,6 @@ class create_combinations(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        '../input_file.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        '../input_file.txt',
     ]
     create_combinations().run()

@@ -65,9 +65,7 @@ class rating_details(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        # Đường dẫn đến tệp create_combinations.txt
         '--combinations-path', './create_combinations.txt',
-        './rating_usefulness.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        './rating_usefulness.txt',
     ]
     rating_details().run()

@@ -37,7 +37,6 @@ class rating_time(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        './create_combinations.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        './create_combinations.txt',
     ]
     rating_time().run()

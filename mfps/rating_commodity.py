@@ -49,8 +49,7 @@ class rating_commodity(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        '--users-path', '../users.txt',  # Đường dẫn đến tệp users.txt
-        '../input_file.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        '--users-path', '../users.txt',
+        '../input_file.txt',
     ]
     rating_commodity().run()

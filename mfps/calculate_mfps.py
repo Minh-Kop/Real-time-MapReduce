@@ -4,7 +4,7 @@ from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class mfps(MRJob):
+class CalculateMFPS(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
     INTERNAL_PROTOCOL = TextProtocol
 
@@ -43,10 +43,9 @@ class mfps(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        './rating_commodity.txt',  # Tệp đầu vào
-        './rating_usefulness.txt',  # Tệp đầu vào
-        './rating_details.txt',  # Tệp đầu vào
-        './rating_time.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        './rating_commodity.txt',
+        './rating_usefulness.txt',
+        './rating_details.txt',
+        './rating_time.txt',
     ]
-    mfps().run()
+    CalculateMFPS().run()

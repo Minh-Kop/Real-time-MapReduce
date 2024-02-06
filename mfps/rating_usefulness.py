@@ -8,6 +8,10 @@ import os
 class rating_usefulness(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
+    def configure_args(self):
+        super(rating_usefulness, self).configure_args()
+        self.add_file_arg('--rating-commodity-path')
+
     def count_items_mapper(self, _, line):
         key, value = line.strip().split('\t')
         user, _ = key.strip().split(';')
@@ -31,8 +35,7 @@ class rating_usefulness(MRJob):
         return arr
 
     def rating_usefulness_mapper_init(self):
-        rating_commodity_path = os.path.join(os.path.dirname(
-            __file__), 'rating_commodity.txt')
+        rating_commodity_path = self.options.rating_commodity_path
         self.rating_commodity = self.read_file(rating_commodity_path)
 
     def rating_usefulness_mapper(self, user, values):
@@ -66,7 +69,6 @@ class rating_usefulness(MRJob):
 
 if __name__ == '__main__':
     sys.argv[1:] = [
-        '../input_file.txt',  # Tệp đầu vào
-        # '--output', 'output1.txt'  # Tệp đầu ra
+        '../input_file.txt',
     ]
     rating_usefulness().run()
