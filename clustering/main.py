@@ -40,10 +40,6 @@ def write_data_to_file(filename, data, mode='w'):
 
 
 if __name__ == '__main__':
-    # # Create item list
-    # result_data = run_mr_job(ItemList, [create_path('../input_file.txt')])
-    # write_data_to_file(create_path('./output/items.txt'), result_data)
-
     # Calculate average rating
     result_data = run_mr_job(AvgRating, [create_path('../input_file.txt')])
     write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
@@ -52,7 +48,7 @@ if __name__ == '__main__':
     result_data = run_mr_job(UserItemMatrix, [create_path('../input_file.txt'),
                                               create_path(
                                                   './output/avg_ratings.txt'),
-                                              '--items-path', create_path('./output/items.txt')])
+                                              '--items-path', create_path('../items.txt')])
     write_data_to_file(create_path(
         './output/user_item_matrix.txt'), result_data)
     write_data_to_file(create_path('../user_item_matrix.txt'), result_data)
@@ -76,7 +72,7 @@ if __name__ == '__main__':
         pass
     users_file.close()
 
-    M = int(number_of_users/4/1.5) + 1
+    M = int(number_of_users / 4 / 1.5) + 1
 
     # Calculate distance between users and first centroid
     result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('./output/user_item_matrix.txt'),
@@ -187,7 +183,8 @@ if __name__ == '__main__':
         # Update centroids
         result_data = run_mr_job(
             UpdateCentroids, [create_path('./output/user_item_matrix.txt')])
-        write_data_to_file(create_path('./output/new_centroids.txt'), result_data)
+        write_data_to_file(create_path(
+            './output/new_centroids.txt'), result_data)
 
         # Check if has converged
         with open(create_path('./output/new_centroids.txt'), 'r') as new_centroids, open(create_path('./output/centroids.txt'), 'r') as old_centroids:

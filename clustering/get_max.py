@@ -16,7 +16,7 @@ class GetMax(MRJob):
         values = [line.strip().split(';') for line in values]
         values = np.array(values)
 
-        list = values[:, 1]
+        list = values[:, 1].astype('f')
 
         index = np.argmax(list)
         max = values[index]
