@@ -7,7 +7,7 @@ def create_path(filename):
     return os.path.join(current_directory, filename)
 
 
-df = pd.read_csv(create_path('u.csv'), sep=';')
-new_df = pd.DataFrame({'key': df['user_id'].astype(str) + ';' + df['item_id'].astype(str),
-                       'value': df['rating'].astype(str) + ';' + df['timestamp'].astype(str)})
+df = pd.read_csv(create_path('u.csv'), sep=';', dtype='str')
+new_df = pd.DataFrame({'key': df['user_id'] + ';' + df['item_id'],
+                       'value': df['rating'] + ';' + df['timestamp']})
 new_df.to_csv(create_path('u.txt'), sep='\t', index=False, header=False)
