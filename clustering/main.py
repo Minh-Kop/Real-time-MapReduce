@@ -17,23 +17,48 @@ from label import Label
 number_of_clusters = 3
 
 
+def M_nearest_points(input_path, M, output_path):
+    with open(create_path(input_path), 'r') as file:
+        lines = file.readlines()
+
+        pairs = []
+
+        for line in lines:
+            user, distance = map(float, line.strip().split('\t'))
+            pairs.append([user, distance])
+
+        data_arr = np.array(pairs)
+        indices = np.argsort(data_arr[:, 1])
+        sorted_data_arr = data_arr[indices]
+
+        if (M == 0):
+            return
+
+        data_str = []
+        M_nearest = sorted_data_arr[:M]
+        for i in M_nearest:
+            data_str.append(f"{i[0]}\t{i[1]}\n")
+
+        write_data_to_file(create_path(output_path), data_str)
+
+
 def get_max(input_path, output_path):
     with open(create_path(input_path), 'r') as file:
         lines = file.readlines()
 
-    pairs = []
+        pairs = []
 
-    for line in lines:
-        a, b = map(str, line.strip().split('\t'))
-        pairs.append([a, b])
+        for line in lines:
+            a, b = map(str, line.strip().split('\t'))
+            pairs.append([a, b])
 
-    data_arr = np.array(pairs)
+        data_arr = np.array(pairs)
 
-    index_of_max_b = np.argmax(data_arr[:, 1].astype(float))
-    element_with_max_b = data_arr[index_of_max_b]
+        index_of_max_b = np.argmax(data_arr[:, 1].astype(float))
+        element_with_max_b = data_arr[index_of_max_b]
 
-    write_data_to_file(create_path(output_path),
-                       f"{element_with_max_b[0]}\t{element_with_max_b[1]}")
+        write_data_to_file(create_path(output_path),
+                           f"{element_with_max_b[0]}\t{element_with_max_b[1]}")
 
 
 def create_path(filename):
@@ -100,10 +125,11 @@ if __name__ == '__main__':
     write_data_to_file(create_path('./output/D.txt'), result_data)
 
     # Calculate M nearest points
-    result_data = run_mr_job(MNearestPoints, [create_path('./output/D.txt'),
-                                              '--m', str(M)])
-    write_data_to_file(create_path(
-        './output/M_nearest_points.txt'), result_data)
+    # result_data = run_mr_job(MNearestPoints, [create_path('./output/D.txt'),
+    #                                           '--m', str(M)])
+    # write_data_to_file(create_path(
+    #     './output/M_nearest_points.txt'), result_data)
+    M_nearest_points('./output/D.txt', M, './output/M_nearest_points.txt')
 
     # Discard nearest points in user-item matrix
     result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
@@ -170,10 +196,11 @@ if __name__ == '__main__':
         write_data_to_file(create_path('./output/D_.txt'), result_data)
 
         # Calculate M nearest points
-        result_data = run_mr_job(MNearestPoints, [create_path('./output/D_.txt'),
-                                                  '--m', str(M)])
-        write_data_to_file(create_path(
-            './output/M_nearest_points.txt'), result_data)
+        # result_data = run_mr_job(MNearestPoints, [create_path('./output/D_.txt'),
+        #                                           '--m', str(M)])
+        # write_data_to_file(create_path(
+        #     './output/M_nearest_points.txt'), result_data)
+        M_nearest_points('./output/D_.txt', M, './output/M_nearest_points.txt')
 
         # Discard nearest points in user-item matrix
         result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
