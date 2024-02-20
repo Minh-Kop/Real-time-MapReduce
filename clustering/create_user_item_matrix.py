@@ -48,7 +48,7 @@ class UserItemMatrix(MRJob):
 
         # Use boolean indexing to remove rows from the original array
         coordinates = values[~rows_to_remove]
-        coordinates = np.vstack(coordinates).astype(np.float)
+        coordinates = np.vstack(coordinates).astype(float)
 
         # avg_rating = np.sum(coordinates[:, 1]) / float(len(coordinates))
 
