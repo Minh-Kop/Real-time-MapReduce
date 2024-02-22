@@ -1,18 +1,18 @@
 import os
 import numpy as np
 
-from calculate_avg_rating import AvgRating
-from create_user_item_matrix import UserItemMatrix
-from create_importance import Importance
-# from get_max import GetMax
-from create_centroid import CreateCentroid
-from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
-from calculate_M_nearest_points import MNearestPoints
-from discard_nearest_points import DiscardNearestPoints
-from calculate_scaling import Scaling
-from calculate_sum_F_D import SumFD
-from update_centroids import UpdateCentroids
-from label import Label
+from clustering.calculate_avg_rating import AvgRating
+from clustering.create_user_item_matrix import UserItemMatrix
+from clustering.create_importance import Importance
+# from clustering.get_max import GetMax
+from clustering.create_centroid import CreateCentroid
+from clustering.calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
+from clustering.calculate_M_nearest_points import MNearestPoints
+from clustering.discard_nearest_points import DiscardNearestPoints
+from clustering.calculate_scaling import Scaling
+from clustering.calculate_sum_F_D import SumFD
+from clustering.update_centroids import UpdateCentroids
+from clustering.label import Label
 
 number_of_clusters = 3
 
@@ -83,7 +83,7 @@ def write_data_to_file(filename, data, mode='w'):
     output_file.close()
 
 
-if __name__ == '__main__':
+def run():
     # Calculate average rating
     result_data = run_mr_job(AvgRating, [create_path('../input_file.txt')])
     write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
