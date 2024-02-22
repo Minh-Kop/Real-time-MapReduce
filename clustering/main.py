@@ -83,22 +83,22 @@ def write_data_to_file(filename, data, mode='w'):
     output_file.close()
 
 
-def run_clustering():
+def run_clustering(number_of_clusters=3):
     # Calculate average rating
-    result_data = run_mr_job(AvgRating, [create_path('../input_file.txt')])
+    result_data = run_mr_job(AvgRating, [create_path('../input/input_file.txt')])
     write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
 
     # Create user-item matrix
-    result_data = run_mr_job(UserItemMatrix, [create_path('../input_file.txt'),
+    result_data = run_mr_job(UserItemMatrix, [create_path('../input/input_file.txt'),
                                               create_path(
                                                   './output/avg_ratings.txt'),
-                                              '--items-path', create_path('../items.txt')])
+                                              '--items-path', create_path('../input/items.txt')])
     write_data_to_file(create_path(
         './output/user_item_matrix.txt'), result_data)
-    write_data_to_file(create_path('../user_item_matrix.txt'), result_data)
+    write_data_to_file(create_path('../input/user_item_matrix.txt'), result_data)
 
     # Calculate importance
-    result_data = run_mr_job(Importance, [create_path('../input_file.txt')])
+    result_data = run_mr_job(Importance, [create_path('../input/input_file.txt')])
     write_data_to_file(create_path('./output/F.txt'), result_data)
 
     # # Find most importance
@@ -112,7 +112,7 @@ def run_clustering():
     write_data_to_file(create_path('./output/centroids.txt'), result_data)
 
     # Calculate number of discarded points
-    users_file = open(create_path('../users.txt'), 'r')
+    users_file = open(create_path('../input/users.txt'), 'r')
     for number_of_users, line in enumerate(users_file, start=1):
         pass
     users_file.close()
@@ -223,7 +223,7 @@ def run_clustering():
         count += 1
 
         # Calculate distance between users and centroids
-        result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('../user_item_matrix.txt'),
+        result_data = run_mr_job(DistanceBetweenUsersCentroid, [create_path('../input/user_item_matrix.txt'),
                                                                 '--first-centroid-path', create_path(
                                                                     './output/centroids.txt'),
                                                                 '--return-centroid-id', 'True'])
@@ -260,4 +260,4 @@ def run_clustering():
     # Assign labels
     result_data = run_mr_job(
         Label, [create_path('./output/user_item_matrix.txt')])
-    write_data_to_file(create_path('./output/labels.txt'), result_data)
+    write_data_to_file(create_path('../output/labels.txt'), result_data)
