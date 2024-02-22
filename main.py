@@ -1,4 +1,4 @@
-import clustering.main as clustering
+from clustering.main import run_clustering
 
-if __name__ == '__main__':
-    clustering.main()
+
+run()
