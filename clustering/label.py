@@ -10,7 +10,7 @@ class Label(MRJob):
     def label_mapper(self, _, line):
         user, value = line.strip().split('\t')
         _, label = value.strip().split('&')
-        yield f'{user}', f'{label}'
+        yield f'{user}', f'{label}|rc'
 
     def steps(self):
         return [
