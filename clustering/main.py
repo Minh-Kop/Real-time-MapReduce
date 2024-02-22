@@ -83,7 +83,7 @@ def write_data_to_file(filename, data, mode='w'):
     output_file.close()
 
 
-def run():
+def run_clustering():
     # Calculate average rating
     result_data = run_mr_job(AvgRating, [create_path('../input_file.txt')])
     write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
