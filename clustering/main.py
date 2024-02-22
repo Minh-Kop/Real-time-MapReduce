@@ -1,7 +1,6 @@
 import os
 import numpy as np
 
-from create_item_list import ItemList
 from calculate_avg_rating import AvgRating
 from create_user_item_matrix import UserItemMatrix
 from create_importance import Importance
