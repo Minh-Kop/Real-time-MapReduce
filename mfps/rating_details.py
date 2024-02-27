@@ -2,6 +2,7 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
+import pandas as pd
 
 
 class rating_details(MRJob):
@@ -9,56 +10,45 @@ class rating_details(MRJob):
 
     def configure_args(self):
         super(rating_details, self).configure_args()
-        self.add_file_arg('--combinations-path',
-                          help='Path to combinations file')
+        self.add_file_arg('--avg-rating-path',
+                          help='Path to average rating file')
 
-    def create_combinations_list(self, filename):
-        combinations = []
-        with open(filename, 'r') as file:
-            for line in file:
-                combination = line.strip()  # Remove leading/trailing whitespaces and newlines
-                combinations.append(combination)
-        return combinations
+    def create_avg_rating_df(self, filename):
+        df = pd.read_csv(filename, sep='\t', names=['user', 'avg_rating'])
+        df.set_index('user', inplace=True)
 
-    def rating_details_mapper_init(self):
-        combinations_path = self.options.combinations_path
-        self.combinations = self.create_combinations_list(combinations_path)
+        return df
+
+    def rating_details_reducer_init(self):
+        avg_rating_path = self.options.avg_rating_path
+        self.avg_rating = self.create_avg_rating_df(avg_rating_path)
 
     def rating_details_mapper(self, _, line):
-        users, value = line.strip().split('\t')
-        user_1, user_2 = users.strip().split(';')
-        avg_rating = value.strip().split(';')[1]
+        key, value = line.strip().split('\t')
 
-        for combination in self.combinations:
-            c_users, c_value = combination.strip().split('\t')
-            c_user_1, c_user_2 = c_users.strip().split(';')
-            ratings = c_value.strip().split('|')[0]
-
-            if ((user_1 == c_user_1 and user_2 == c_user_2) or (user_1 == c_user_2 and user_2 == c_user_1)):
-                yield users, f'{avg_rating};{ratings}'
+        yield key, value
 
     def rating_details_reducer(self, users, values):
-        values = list(values)
-        values = [value.strip().split(';') for value in values]
+        df = self.avg_rating
+        user, _ = users.strip().split(';')
+        threshold = float(df.loc[float(user), 'avg_rating'])
 
         count = 0
+        for value in values:
+            ratings, _ = value.strip().split('|')
+            rating1, rating2 = ratings.strip().split(';')
+            rating1 = float(rating1)
+            rating2 = float(rating2)
 
-        for line in values:
-            liking_threshold, user1_rating, user2_rating = line
-            liking_threshold = float(liking_threshold)
-            user1_rating = float(user1_rating)
-            user2_rating = float(user2_rating)
-            if (user1_rating > liking_threshold and user2_rating > liking_threshold):
-                count += 1
-            elif (user1_rating < liking_threshold and user2_rating < liking_threshold):
-                count += 1
+            if ((rating1 < threshold and rating2 < threshold) or (rating1 > threshold and rating2 > threshold)):
+                count = count+1
 
         yield users, f'{count};rd'
 
     def steps(self):
         return [
-            MRStep(mapper_init=self.rating_details_mapper_init,
-                   mapper=self.rating_details_mapper,
+            MRStep(mapper=self.rating_details_mapper,
+                   reducer_init=self.rating_details_reducer_init,
                    reducer=self.rating_details_reducer)
         ]
 

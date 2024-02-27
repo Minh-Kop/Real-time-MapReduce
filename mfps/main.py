@@ -30,7 +30,7 @@ def write_data_to_file(filename, data, mode='w'):
     output_file.close()
 
 
-def run_mfps(input_path, user_path):
+def run_mfps(input_path, user_path, cluster):
     # Create combinations
     result_data = run_mr_job(create_combinations, [
                              create_path(create_path(input_path))])
@@ -51,8 +51,8 @@ def run_mfps(input_path, user_path):
         './output/rating_usefulness.txt'), result_data)
 
     # Calculate rating details
-    result_data = run_mr_job(rating_details, ['--combinations-path', create_path('./output/create_combinations.txt'),
-                                              create_path('./output/rating_usefulness.txt')])
+    result_data = run_mr_job(rating_details, ['--avg-rating-path', create_path('../clustering/output/avg_ratings.txt'),
+                                              create_path('./output/create_combinations.txt')])
     write_data_to_file(create_path('./output/rating_details.txt'), result_data)
 
     # Calculate rating time
@@ -67,4 +67,5 @@ def run_mfps(input_path, user_path):
                                              create_path(
                                                  './output/rating_details.txt'),
                                              create_path('./output/rating_time.txt')])
-    write_data_to_file(create_path('./output/mfps.txt'), result_data)
+    write_data_to_file(create_path(
+        f'./output/mfps_{cluster}.txt'), result_data)
