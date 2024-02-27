@@ -31,19 +31,19 @@ items.drop_duplicates().to_csv(create_path(
 run_clustering(6)
 
 # Split input file
-df = pd.read_csv('./input/input_file.txt', sep='\t',
-                 dtype='str', names=['key', 'value'])
-df['user'] = df['key'].str.split(';', expand=True)[0]
+# df = pd.read_csv('./input/input_file.txt', sep='\t',
+#                  dtype='str', names=['key', 'value'])
+# df['user'] = df['key'].str.split(';', expand=True)[0]
 
-labels = pd.read_csv('./clustering/output/labels.txt',
-                     sep='\t', dtype='str', names=['user', 'label'])
+# labels = pd.read_csv('./clustering/output/labels.txt',
+#                      sep='\t', dtype='str', names=['user', 'label'])
 
-r = pd.merge(df, labels, on="user").drop(columns='user')
-r = r.set_index('label')
+# r = pd.merge(df, labels, on="user").drop(columns='user')
+# r = r.set_index('label')
 
-centroids = pd.read_csv('./clustering/output/centroids.txt',
-                        sep='\t', dtype='str', names=['key'], usecols=[0])
-for index, value in enumerate(centroids['key']):
-    result = r.loc[value]
-    result.to_csv((f'./input/input_file_{index}.txt'),
-                  sep='\t', index=False, header=False)
+# centroids = pd.read_csv('./clustering/output/centroids.txt',
+#                         sep='\t', dtype='str', names=['key'], usecols=[0])
+# for index, value in enumerate(centroids['key']):
+#     result = r.loc[value]
+#     result.to_csv((f'./input/input_file_{index}.txt'),
+#                   sep='\t', index=False, header=False)

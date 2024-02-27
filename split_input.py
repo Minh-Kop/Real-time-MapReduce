@@ -11,15 +11,15 @@ class SplitInput(MRJob):
         self.add_passthru_arg('--cid', type=str, default=1)
 
     def split_input_mapper(self, _, line):
-        key, value = line.strip().split('\t')
-        value = value.strip().split('|')
+        variables = line.strip().split('&')
+        key, value = variables[0].strip().split('\t')
 
-        if (len(value) == 1):
+        if (len(variables) == 1):
             user, item = key.strip().split(';')
 
-            yield f'{user}', f'{item};{value[0]}'
+            yield f'{user}', f'{item};{value}'
         else:
-            yield f'{key}', f'{value[0]}'
+            yield f'{key}', f'{variables[1]}'
 
     def split_input_reducer(self, key, values):
         values = list(values)
