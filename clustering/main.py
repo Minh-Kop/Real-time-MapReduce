@@ -1,64 +1,32 @@
 import os
-import numpy as np
-
-from clustering.calculate_avg_rating import AvgRating
-from clustering.create_user_item_matrix import UserItemMatrix
-from clustering.create_importance import Importance
-# from clustering.get_max import GetMax
-from clustering.create_centroid import CreateCentroid
-from clustering.calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
-from clustering.calculate_M_nearest_points import MNearestPoints
-from clustering.discard_nearest_points import DiscardNearestPoints
-from clustering.calculate_scaling import Scaling
-from clustering.calculate_sum_F_D import SumFD
-from clustering.update_centroids import UpdateCentroids
-from clustering.label import Label
-
-number_of_clusters = 3
+import pandas as pd
 
 
-def M_nearest_points(input_path, M, output_path):
-    with open(create_path(input_path), 'r') as file:
-        lines = file.readlines()
+from .calculate_avg_rating import AvgRating
+from .create_user_item_matrix import UserItemMatrix
+from .create_importance import Importance
+from .get_max import get_max
+from .create_centroid import CreateCentroid
+from .calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
+from .calculate_M_nearest_points import M_nearest_points_pandas
+from .discard_nearest_points import DiscardNearestPoints
+from .calculate_scaling import Scaling
+from .calculate_sum_F_D import SumFD
+from .update_centroids import UpdateCentroids
+from .label import Label
 
-        pairs = []
-
-        for line in lines:
-            user, distance = map(float, line.strip().split('\t'))
-            pairs.append([user, distance])
-
-        data_arr = np.array(pairs)
-        indices = np.argsort(data_arr[:, 1])
-        sorted_data_arr = data_arr[indices]
-
-        if (M == 0):
-            return
-
-        data_str = []
-        M_nearest = sorted_data_arr[:M]
-        for i in M_nearest:
-            data_str.append(f"{i[0]}\t{i[1]}\n")
-
-        write_data_to_file(create_path(output_path), data_str)
-
-
-def get_max(input_path, output_path):
-    with open(create_path(input_path), 'r') as file:
-        lines = file.readlines()
-
-        pairs = []
-
-        for line in lines:
-            a, b = map(str, line.strip().split('\t'))
-            pairs.append([a, b])
-
-        data_arr = np.array(pairs)
-
-        index_of_max_b = np.argmax(data_arr[:, 1].astype(float))
-        element_with_max_b = data_arr[index_of_max_b]
-
-        write_data_to_file(create_path(output_path),
-                           f"{element_with_max_b[0]}\t{element_with_max_b[1]}")
+# from clustering.calculate_avg_rating import AvgRating
+# from clustering.create_user_item_matrix import UserItemMatrix
+# from clustering.create_importance import Importance
+# from clustering.get_max import get_max
+# from clustering.create_centroid import CreateCentroid
+# from clustering.calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
+# from clustering.calculate_M_nearest_points import M_nearest_points_pandas
+# from clustering.discard_nearest_points import DiscardNearestPoints
+# from clustering.calculate_scaling import Scaling
+# from clustering.calculate_sum_F_D import SumFD
+# from clustering.update_centroids import UpdateCentroids
+# from clustering.label import Label
 
 
 def create_path(filename):
@@ -83,28 +51,27 @@ def write_data_to_file(filename, data, mode='w'):
     output_file.close()
 
 
-def run_clustering(number_of_clusters=3):
+def run_clustering(input_file, number_of_clusters=3):
     # Calculate average rating
-    result_data = run_mr_job(AvgRating, [create_path('../input/input_file.txt')])
+    result_data = run_mr_job(AvgRating, [create_path(input_file)])
     write_data_to_file(create_path('./output/avg_ratings.txt'), result_data)
 
     # Create user-item matrix
-    result_data = run_mr_job(UserItemMatrix, [create_path('../input/input_file.txt'),
+    result_data = run_mr_job(UserItemMatrix, [create_path(input_file),
                                               create_path(
                                                   './output/avg_ratings.txt'),
                                               '--items-path', create_path('../input/items.txt')])
     write_data_to_file(create_path(
         './output/user_item_matrix.txt'), result_data)
-    write_data_to_file(create_path('../input/user_item_matrix.txt'), result_data)
+    write_data_to_file(create_path(
+        '../input/user_item_matrix.txt'), result_data)
 
     # Calculate importance
-    result_data = run_mr_job(Importance, [create_path('../input/input_file.txt')])
+    result_data = run_mr_job(Importance, [create_path(input_file)])
     write_data_to_file(create_path('./output/F.txt'), result_data)
 
-    # # Find most importance
-    # result_data = run_mr_job(GetMax, [create_path('./output/F.txt')])
-    # write_data_to_file(create_path('./output/max_F.txt'), result_data)
-    get_max('./output/F.txt', './output/max_F.txt')
+    # Find most importance
+    get_max(create_path('./output/F.txt'), create_path('./output/max_F.txt'))
 
     # Create first centroid
     result_data = run_mr_job(CreateCentroid, [create_path('./output/user_item_matrix.txt'),
@@ -125,11 +92,8 @@ def run_clustering(number_of_clusters=3):
     write_data_to_file(create_path('./output/D.txt'), result_data)
 
     # Calculate M nearest points
-    # result_data = run_mr_job(MNearestPoints, [create_path('./output/D.txt'),
-    #                                           '--m', str(M)])
-    # write_data_to_file(create_path(
-    #     './output/M_nearest_points.txt'), result_data)
-    M_nearest_points('./output/D.txt', M, './output/M_nearest_points.txt')
+    M_nearest_points_pandas('./output/D.txt', M,
+                            './output/M_nearest_points.txt')
 
     # Discard nearest points in user-item matrix
     result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
@@ -152,9 +116,8 @@ def run_clustering(number_of_clusters=3):
         write_data_to_file(create_path('./output/D.txt'), result_data)
 
         # Get max F
-        # result_data = run_mr_job(GetMax, [create_path('./output/F.txt')])
-        # write_data_to_file(create_path('./output/max_F.txt'), result_data)
-        get_max('./output/F.txt', './output/max_F.txt')
+        get_max(create_path('./output/F.txt'),
+                create_path('./output/max_F.txt'))
 
         # Scaling F
         result_data = run_mr_job(
@@ -162,9 +125,8 @@ def run_clustering(number_of_clusters=3):
         write_data_to_file(create_path('./output/F.txt'), result_data)
 
         # Get max min_D
-        # result_data = run_mr_job(GetMax, [create_path('./output/D.txt')])
-        # write_data_to_file(create_path('./output/max_D.txt'), result_data)
-        get_max('./output/D.txt', './output/max_D.txt')
+        get_max(create_path('./output/D.txt'),
+                create_path('./output/max_D.txt'))
 
         # Scaling D
         result_data = run_mr_job(Scaling, [create_path('./output/D.txt'),
@@ -177,10 +139,8 @@ def run_clustering(number_of_clusters=3):
         write_data_to_file(create_path('./output/F_D.txt'), result_data)
 
         # Calculate max F_D
-        # result_data = run_mr_job(
-        #     GetMax, [create_path('./output/F_D.txt')])
-        # write_data_to_file(create_path('./output/max_F_D.txt'), result_data)
-        get_max('./output/F_D.txt', './output/max_F_D.txt')
+        get_max(create_path('./output/F_D.txt'),
+                create_path('./output/max_F_D.txt'))
 
         # Create another centroid
         result_data = run_mr_job(CreateCentroid, [create_path('./output/user_item_matrix.txt'),
@@ -196,11 +156,8 @@ def run_clustering(number_of_clusters=3):
         write_data_to_file(create_path('./output/D_.txt'), result_data)
 
         # Calculate M nearest points
-        # result_data = run_mr_job(MNearestPoints, [create_path('./output/D_.txt'),
-        #                                           '--m', str(M)])
-        # write_data_to_file(create_path(
-        #     './output/M_nearest_points.txt'), result_data)
-        M_nearest_points('./output/D_.txt', M, './output/M_nearest_points.txt')
+        M_nearest_points_pandas('./output/D_.txt', M,
+                                './output/M_nearest_points.txt')
 
         # Discard nearest points in user-item matrix
         result_data = run_mr_job(DiscardNearestPoints, [create_path('./output/user_item_matrix.txt'),
@@ -261,3 +218,19 @@ def run_clustering(number_of_clusters=3):
     result_data = run_mr_job(
         Label, [create_path('./output/user_item_matrix.txt')])
     write_data_to_file(create_path('../output/labels.txt'), result_data)
+
+
+if __name__ == "__main__":
+    # Create users, items files
+    input_file = pd.read_csv(create_path("../input/input_file copy.txt"), sep='\t',
+                             names=['key', 'values'], dtype='str', usecols=['key'])
+    input_file = input_file['key'].str.split(';', expand=True)
+    users = input_file[0]
+    items = input_file[1]
+
+    users.drop_duplicates().to_csv(create_path(
+        '../input/users.txt'), index=False, header=False)
+    items.drop_duplicates().to_csv(create_path(
+        '../input/items.txt'), index=False, header=False)
+
+    run_clustering(create_path('../input/input_file copy.txt'))
