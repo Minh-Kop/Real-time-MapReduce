@@ -25,8 +25,10 @@ class rating_details(MRJob):
 
     def rating_details_mapper(self, _, line):
         key, value = line.strip().split('\t')
+        keys = key.strip().split(';')
 
-        yield key, value
+        for index, _ in enumerate(keys):
+            yield f'{keys[index]};{keys[1 - index]}', value
 
     def rating_details_reducer(self, users, values):
         df = self.avg_rating
