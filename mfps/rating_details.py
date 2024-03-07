@@ -30,7 +30,7 @@ class rating_details(MRJob):
 
     def rating_details_reducer(self, users, values):
         df = self.avg_rating
-        user, _ = users.strip().split(';')
+        user = users.strip().split(';')[0]
         threshold = float(df.loc[float(user), 'avg_rating'])
 
         count = 0

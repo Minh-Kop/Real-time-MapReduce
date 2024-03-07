@@ -217,7 +217,7 @@ def run_clustering(input_file, number_of_clusters=3):
     # Assign labels
     result_data = run_mr_job(
         Label, [create_path('./output/user_item_matrix.txt')])
-    write_data_to_file(create_path('../output/labels.txt'), result_data)
+    write_data_to_file(create_path('./output/labels.txt'), result_data)
 
 
 if __name__ == "__main__":
