@@ -51,7 +51,7 @@ def run_mfps(input_path, user_path, cluster):
         './output/rating_usefulness.txt'), result_data)
 
     # Calculate rating details
-    result_data = run_mr_job(rating_details, ['--avg-rating-path', create_path('../clustering/output/avg_ratings.txt'),
+    result_data = run_mr_job(rating_details, [create_path('../clustering/output/avg_ratings.txt'),
                                               create_path('./output/create_combinations.txt')])
     write_data_to_file(create_path('./output/rating_details.txt'), result_data)
 
