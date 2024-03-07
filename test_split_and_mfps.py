@@ -32,36 +32,39 @@ if __name__ == '__main__':
     # run_clustering(6)
 
     # Split input using mapreduce
-    centroids = []
-    with open(create_path('./clustering/output/centroids.txt')) as file:
-        for line in file:
-            id, _ = line.strip().split('\t')
-            centroids.append(id)
+    # centroids = []
+    # with open(create_path('./clustering/output/centroids.txt')) as file:
+    #     for line in file:
+    #         id, _ = line.strip().split('\t')
+    #         centroids.append(id)
 
-    for index, id in enumerate(centroids):
-        result_data = run_mr_job(SplitInput, [create_path(
-            './input/input_file.txt'), create_path('./clustering/output/user_item_matrix.txt'), '--cid', id])
-        write_data_to_file(f'test/output/output_file{index}.txt', result_data)
+    # for index, id in enumerate(centroids):
+    #     result_data = run_mr_job(SplitInput, [create_path(
+    #         './input/input_file.txt'), create_path('./clustering/output/user_item_matrix.txt'), '--cid', id])
+    #     write_data_to_file(f'test/output/output_file{index}.txt', result_data)
 
-    # Split new input into new user
-    for index, cluster in enumerate(centroids):
-        start_mr = time.time()
+    # # Split new input into new user
+    # for index, cluster in enumerate(centroids):
+    #     start_mr = time.time()
 
-        with open(create_path(f'./test/output/output_file_{index}.txt'), 'r') as fread, open(create_path(f'./test/user_split/user_{index}.txt'), 'a') as fwrite:
-            L = []
-            for line in fread:
-                user, _, _ = line.strip().split(';')
-                new_line = user + '\n'
+    #     with open(create_path(f'./test/output/output_file_{index}.txt'), 'r') as fread, open(create_path(f'./test/user_split/user_{index}.txt'), 'a') as fwrite:
+    #         L = []
+    #         for line in fread:
+    #             user, _, _ = line.strip().split(';')
+    #             new_line = user + '\n'
 
-                if new_line not in L:
-                    L.append(user+'\n')
+    #             if new_line not in L:
+    #                 L.append(user+'\n')
 
-            fwrite.writelines(L)
+    #         fwrite.writelines(L)
 
-        # run mfps
-        run_mfps(create_path(f'./test/output/output_file_{index}.txt'),
-                 create_path(f'./test/user_split/user_{index}.txt'), cluster)
+    #     # run mfps
+    #     run_mfps(create_path(f'./test/output/output_file_{index}.txt'),
+    #              create_path(f'./test/user_split/user_{index}.txt'), cluster)
 
-        end_mr = time.time()
+    #     end_mr = time.time()
 
-        print("time: " + str(end_mr - start_mr))
+    #     print("time: " + str(end_mr - start_mr))
+
+    run_mfps(create_path('./input/input_file copy.txt'),
+             create_path('./input/user.txt'), '')

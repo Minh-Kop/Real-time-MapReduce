@@ -2,55 +2,63 @@ import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import pandas as pd
+import numpy as np
 
 
 class rating_details(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
-    def configure_args(self):
-        super(rating_details, self).configure_args()
-        self.add_file_arg('--avg-rating-path',
-                          help='Path to average rating file')
-
-    def create_avg_rating_df(self, filename):
-        df = pd.read_csv(filename, sep='\t', names=['user', 'avg_rating'])
-        df.set_index('user', inplace=True)
-
-        return df
-
-    def rating_details_reducer_init(self):
-        avg_rating_path = self.options.avg_rating_path
-        self.avg_rating = self.create_avg_rating_df(avg_rating_path)
-
     def rating_details_mapper(self, _, line):
         key, value = line.strip().split('\t')
         keys = key.strip().split(';')
 
-        for index, _ in enumerate(keys):
-            yield f'{keys[index]};{keys[1 - index]}', value
+        if len(keys) == 1:
+            yield keys[0], value
+        else:
+            value = value.strip().split('|')
+            for index, _ in enumerate(keys):
+                yield f'{keys[index]}', f'{keys[1 - index]};{value[0]}'
 
-    def rating_details_reducer(self, users, values):
-        df = self.avg_rating
-        user, _ = users.strip().split(';')
-        threshold = float(df.loc[float(user), 'avg_rating'])
+    def rating_details_reducer(self, user, values):
+        values = list(values)
+        if (len(values) != 1):
+            threshold = 0
 
-        count = 0
-        for value in values:
-            ratings, _ = value.strip().split('|')
-            rating1, rating2 = ratings.strip().split(';')
-            rating1 = float(rating1)
-            rating2 = float(rating2)
+            for index, i in enumerate(values):
+                i = i.strip().split(';')
+                if len(i) == 1:
+                    threshold = float(i[0])
+                    values.pop(index)
 
-            if ((rating1 < threshold and rating2 < threshold) or (rating1 > threshold and rating2 > threshold)):
-                count = count+1
+            values = np.array(values)
 
-        yield users, f'{count};rd'
+            split_array = np.array([element.split(';')
+                                    for element in values])
+            keys = split_array[:, 0]
+            unique_keys = np.unique(keys)
+            arrays_by_key = {key: [] for key in unique_keys}
+
+            for key, element in zip(keys, values):
+                arrays_by_key[key].append(element)
+            arrays = [np.array(arrays_by_key[key]) for key in unique_keys]
+
+            user2 = ''
+            for array in arrays:
+                count = 0
+                for val in array:
+                    user_t, rating1, rating2 = val.strip().split(';')
+                    user2 = user_t
+                    rating1 = float(rating1)
+                    rating2 = float(rating2)
+
+                    if ((rating1 < threshold and rating2 < threshold) or (rating1 > threshold and rating2 > threshold)):
+                        count = count+1
+
+                yield f'{user};{user2}', f'{count};rd'
 
     def steps(self):
         return [
             MRStep(mapper=self.rating_details_mapper,
-                   reducer_init=self.rating_details_reducer_init,
                    reducer=self.rating_details_reducer)
         ]
 
