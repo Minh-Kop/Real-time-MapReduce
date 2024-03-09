@@ -17,18 +17,18 @@ def run_mr_job(mr_job_class, input_args):
         runner.run()
         data = []
         for key, value in mr_job.parse_output(runner.cat_output()):
-            data.append(f'{key}\t{value}')
+            data.append(f"{key}\t{value}")
         return data
 
 
-def write_data_to_file(filename, data, mode='w'):
+def write_data_to_file(filename, data, mode="w"):
     output_file = open(filename, mode)
     for el in data:
         output_file.writelines(el)
     output_file.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # run_clustering(6)
 
     # Split input using mapreduce
@@ -66,5 +66,8 @@ if __name__ == '__main__':
 
     #     print("time: " + str(end_mr - start_mr))
 
-    run_mfps(create_path('./input/input_file copy.txt'),
-             create_path('./input/user.txt'), '')
+    run_mfps(
+        "./input/input_file copy.txt",
+        "./clustering/output/avg_ratings.txt",
+        "./output/mfps.txt",
+    )
