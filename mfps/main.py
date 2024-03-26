@@ -38,7 +38,11 @@ def run_mfps(input_path, avg_ratings_path, output_path):
     # Calculate rating details
     result_data = run_mr_job(
         rating_details,
-        ["./mfps/output/create_combinations.txt", avg_ratings_path],
+        [
+            "./mfps/output/create_combinations.txt",
+            "--avg-rating-path",
+            avg_ratings_path,
+        ],
     )
     write_data_to_file("./mfps/output/rating_details.txt", result_data)
 
