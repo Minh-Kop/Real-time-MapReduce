@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #     print("time: " + str(end_mr - start_mr))
 
     run_mfps(
-        "./input/input_file copy.txt",
-        "./clustering/output/avg_ratings.txt",
+        "hdfs://localhost:9000/user/mackop/input/input_file_copy.txt",
+        "hdfs://localhost:9000/user/mackop/input/avg_ratings.txt",
         "./output/mfps.txt",
     )

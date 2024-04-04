@@ -1,31 +1,31 @@
-import sys
+# import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class CalculateMFPS(MRJob):
+class MFPS(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
     INTERNAL_PROTOCOL = TextProtocol
 
     def mfps_mapper(self, _, line):
-        key, value = line.strip().split('\t')
-        u1, u2 = key.strip().split(';')
+        key, value = line.strip().split("\t")
+        u1, u2 = key.strip().split(";")
 
-        if value.strip().split(';')[-1] == 'rc' or value.strip().split(';')[-1] == 'rt':
-            yield f'{u2};{u1}', value
+        if value.strip().split(";")[-1] == "rc" or value.strip().split(";")[-1] == "rt":
+            yield f"{u2};{u1}", value
         yield key, value
 
     def mfps_reducer(self, key, values):
         values = list(values)
-        values = [value.strip().split(';') for value in values]
+        values = [value.strip().split(";") for value in values]
         mfps = 1
 
         for line in values:
             sim = float(line[0])
             flag = line[-1]
-            if (sim == 0):
-                if flag == 'rc':
+            if sim == 0:
+                if flag == "rc":
                     mfps = 0
                     break
                 continue
@@ -33,7 +33,7 @@ class CalculateMFPS(MRJob):
         if mfps:
             mfps = 1 / mfps
 
-        yield key, f'{mfps}'
+        yield key, f"{mfps}"
 
     def steps(self):
         return [
@@ -41,11 +41,11 @@ class CalculateMFPS(MRJob):
         ]
 
 
-if __name__ == '__main__':
-    sys.argv[1:] = [
-        './rating_commodity.txt',
-        './rating_usefulness.txt',
-        './rating_details.txt',
-        './rating_time.txt',
-    ]
-    CalculateMFPS().run()
+if __name__ == "__main__":
+    # sys.argv[1:] = [
+    #     './rating_commodity.txt',
+    #     './rating_usefulness.txt',
+    #     './rating_details.txt',
+    #     './rating_time.txt',
+    # ]
+    MFPS().run()

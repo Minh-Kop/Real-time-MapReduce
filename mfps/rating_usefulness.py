@@ -1,14 +1,15 @@
-import sys
+# import sys
+
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class rating_usefulness(MRJob):
+class RatingUsefulness(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def configure_args(self):
-        super(rating_usefulness, self).configure_args()
+        super(RatingUsefulness, self).configure_args()
         self.add_file_arg("--rating-commodity-path")
 
     def count_items_mapper(self, _, line):
@@ -63,7 +64,7 @@ class rating_usefulness(MRJob):
 
 
 if __name__ == "__main__":
-    sys.argv[1:] = [
-        "../input_file.txt",
-    ]
-    rating_usefulness().run()
+    # sys.argv[1:] = [
+    #     "../input_file.txt",
+    # ]
+    RatingUsefulness().run()
