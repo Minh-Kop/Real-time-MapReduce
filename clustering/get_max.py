@@ -14,6 +14,7 @@ def get_max(input_path, output_path):
     max_idx = df["distance"].idxmax()
     max_row = df.loc[[max_idx]]
     max_row.to_csv(output_path, sep="\t", index=False, header=False)
+    return max_row.iloc[0, 1]
 
 
 class GetMax(MRJob):
@@ -23,26 +24,21 @@ class GetMax(MRJob):
         user, value = line.strip().split("\t")
         yield None, f"{user};{value}"
 
-    def combiner(self, _, values):
-        values = [line.strip().split(";") for line in values]
-        values = np.array(values)
+    def get_max_value(self, users_values):
+        users_values = [line.strip().split(";") for line in users_values]
+        users_values = np.array(users_values)
 
-        list = values[:, 1]
+        values = users_values[:, 1]
 
-        index = np.argmax(list)
-        max = values[index]
-        user, max_value = max
+        max_idx = np.argmax(values)
+        return users_values[max_idx]
+
+    def combiner(self, _, users_values):
+        user, max_value = self.get_max_value(users_values)
         yield None, f"{user};{max_value}"
 
-    def reducer(self, _, values):
-        values = [line.strip().split(";") for line in values]
-        values = np.array(values)
-
-        list = values[:, 1]
-
-        index = np.argmax(list)
-        max = values[index]
-        user, max_value = max
+    def reducer(self, _, users_values):
+        user, max_value = self.get_max_value(users_values)
         yield f"{user}", f"{max_value}"
 
 

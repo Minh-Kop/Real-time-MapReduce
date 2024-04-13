@@ -16,7 +16,7 @@ def M_nearest_points_pandas(input_path, M, output_path):
         names=["user", "distance"],
         dtype={"user": "Int64", "distance": "Float64"},
     )
-    df = df.sort_values(["distance"], ascending=False)
+    df = df.sort_values(["distance"])
     df = df.iloc[:M]
     df.to_csv(output_path, sep="\t", index=False, header=False)
 
@@ -32,52 +32,35 @@ class MNearestPoints(MRJob):
         user, distance = line.strip().split("\t")
         yield None, f"{user};{distance}"
 
-    def combiner(self, _, distances):
-        distances = [line.strip().split(";") for line in distances]
-        distances = np.array(distances, dtype="f")
+    def get_M_nearest_points(self, users_distances):
+        users_distances = [line.strip().split(";") for line in users_distances]
+        users_distances = np.array(users_distances)
 
         # Get the indices that would sort the array based on the second column
-        indices = np.argsort(distances[:, 1])
+        indices = np.argsort(users_distances[:, 1])
 
         # Use the indices to sort the array
-        sorted_distances = distances[indices]
+        sorted_users_distances = users_distances[indices]
 
         M = self.options.M
-        if M == 0:
-            return
 
         # Get top M values in sorted array
-        nearest_points = sorted_distances[:M]
+        nearest_points = sorted_users_distances[:M]
+        return nearest_points
+
+    def combiner(self, _, users_distances):
+        nearest_points = self.get_M_nearest_points(users_distances)
         for user, distance in nearest_points:
             yield None, f"{user};{distance}"
 
-    def reducer(self, _, distances):
-        distances = [line.strip().split(";") for line in distances]
-        distances = np.array(distances, dtype="f")
-
-        # Get the indices that would sort the array based on the second column
-        indices = np.argsort(distances[:, 1])
-
-        # Use the indices to sort the array
-        sorted_distances = distances[indices]
-
-        M = self.options.M
-        if M == 0:
-            return
-
-        # Get top M values in sorted array
-        nearest_points = sorted_distances[:M]
+    def reducer(self, _, users_distances):
+        nearest_points = self.get_M_nearest_points(users_distances)
         for user, distance in nearest_points:
             yield f"{user}", f"{distance}"
 
 
 if __name__ == "__main__":
-    M = 1
-
-    # M_nearest_points_pandas(
-    #     "./clustering/output/D.txt", M, "./clustering/output/M_nearest_points.txt"
-    # )
-
+    # M = 1
     # sys.argv[1:] = [
     #     "./clustering/output/D.txt",
     #     "--M",

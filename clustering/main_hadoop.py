@@ -1,11 +1,11 @@
 import os
 import sys
+import re
 
 sys.path.append(os.path.abspath("./clustering/util"))
 
-import pandas as pd
 
-from custom_util import run_mr_job, write_data_to_file
+from custom_util import run_mr_job_hadoop
 from .calculate_avg_rating import AvgRating
 from .create_user_item_matrix import UserItemMatrix
 from .create_importance import Importance
@@ -22,60 +22,72 @@ from .label import Label
 
 
 def create_centroids_list(num):
-    run_mr_job(
+    input = [
+        f"hdfs://localhost:9000/user/mackop/clustering-output/centroid-{i}"
+        for i in range(num + 1)
+    ]
+
+    return run_mr_job_hadoop(
         CreateCentroidsList,
-        [
-            "hdfs://localhost:9000/user/mackop/clustering-output/centroid-*",
-        ],
+        input,
         f"hdfs://localhost:9000/user/mackop/clustering-output/centroids-{num}",
         True,
     )
 
 
+def get_max_value(values):
+    return float(re.search(r"\t(.*?)\n", values[0]).group(1))
+
+
 def run_clustering(input_file_path, number_of_clusters=3):
     # Calculate average rating
-    run_mr_job(
+    run_mr_job_hadoop(
         AvgRating,
         [input_file_path],
         "hdfs://localhost:9000/user/mackop/clustering-output/avg",
     )
+    print("Calculate average rating")
 
     # Create user-item matrix
-    run_mr_job(
+    run_mr_job_hadoop(
         UserItemMatrix,
         [
             input_file_path,
-            "hdfs://localhost:9000/user/clustering-output/output/avg",
+            "hdfs://localhost:9000/user/mackop/clustering-output/avg",
             "--items-path",
             "./input/items.txt",
         ],
-        "hdfs://localhost:9000/user/mackop/clustering-output/matrix",
+        "hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
     )
+    print("Create user-item matrix")
 
     # Calculate importance
-    run_mr_job(
+    run_mr_job_hadoop(
         Importance,
         [input_file_path],
         "hdfs://localhost:9000/user/mackop/clustering-output/F",
     )
+    print("Calculate importance")
 
     # Find most importance
-    run_mr_job(
+    run_mr_job_hadoop(
         GetMax,
         ["hdfs://localhost:9000/user/mackop/clustering-output/F"],
         "hdfs://localhost:9000/user/mackop/clustering-output/max-F",
     )
+    print("Find most importance")
 
     # Create first centroid
-    run_mr_job(
+    run_mr_job_hadoop(
         CreateCentroid,
         [
-            "hdfs://localhost:9000/user/mackop/clustering-output/matrix",
+            "hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
             "hdfs://localhost:9000/user/mackop/clustering-output/max-F",
         ],
-        "hdfs://localhost:9000/user/mackop/clustering-output/centroid",
+        "hdfs://localhost:9000/user/mackop/clustering-output/centroid-0",
     )
     create_centroids_list(0)
+    print("Create first centroid")
 
     # Calculate number of discarded points
     users_file = open("./input/users.txt", "r")
@@ -83,20 +95,22 @@ def run_clustering(input_file_path, number_of_clusters=3):
         pass
     users_file.close()
     M = int(number_of_users / 4 / 1.5) + 1
+    print("Calculate number of discarded points")
 
     # Calculate distance between users and first centroid
-    run_mr_job(
+    run_mr_job_hadoop(
         DistanceBetweenUsersCentroid,
         [
-            "hdfs://localhost:9000/user/mackop/clustering-output/matrix",
-            "--first-centroid-path",
+            "hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
+            "--centroids-path",
             "hdfs://localhost:9000/user/mackop/input/centroids-0.txt",
         ],
         "hdfs://localhost:9000/user/mackop/clustering-output/D",
     )
+    print("Calculate distance between users and first centroid")
 
     # Calculate M nearest points
-    run_mr_job(
+    run_mr_job_hadoop(
         MNearestPoints,
         [
             "hdfs://localhost:9000/user/mackop/clustering-output/D",
@@ -105,19 +119,21 @@ def run_clustering(input_file_path, number_of_clusters=3):
         ],
         "hdfs://localhost:9000/user/mackop/clustering-output/M-nearest-points",
     )
+    print("Calculate M nearest points")
 
     # Discard nearest points in user-item matrix
-    run_mr_job(
+    run_mr_job_hadoop(
         DiscardNearestPoints,
         [
-            "hdfs://localhost:9000/user/mackop/clustering-output/matrix",
+            "hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
             "hdfs://localhost:9000/user/mackop/clustering-output/M-nearest-points",
         ],
         "hdfs://localhost:9000/user/mackop/clustering-output/matrix-0",
     )
+    print("Discard nearest points in user-item matrix")
 
     # Discard nearest points in F
-    run_mr_job(
+    run_mr_job_hadoop(
         DiscardNearestPoints,
         [
             "hdfs://localhost:9000/user/mackop/clustering-output/F",
@@ -125,60 +141,64 @@ def run_clustering(input_file_path, number_of_clusters=3):
         ],
         "hdfs://localhost:9000/user/mackop/clustering-output/F-0",
     )
+    print("Discard nearest points in F")
 
     # Loop
     for i in range(number_of_clusters - 1):
         print(i)
 
         # Calculate distance between users and centroids
-        run_mr_job(
+        run_mr_job_hadoop(
             DistanceBetweenUsersCentroid,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/matrix-{i}",
-                "--first-centroid-path",
+                "--centroids-path",
                 f"hdfs://localhost:9000/user/mackop/input/centroids-{i}.txt",
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/D-{i}",
         )
+        print("Calculate distance between users and centroids")
 
         # Get max F
-        run_mr_job(
-            GetMax,
-            [f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}"],
-            f"hdfs://localhost:9000/user/mackop/clustering-output/max-F-{i}",
+        return_value = run_mr_job_hadoop(
+            GetMax, [f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}"], None
         )
+        F_max = get_max_value(return_value)
+        print("Get max F")
 
-        # Scaling F
-        result_data = run_mr_job(
+        # Get scaling F
+        run_mr_job_hadoop(
             Scaling,
             [
-                f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}"
-                "--max-value-path",
-                f"hdfs://localhost:9000/user/mackop/clustering-output/max-F-{i}",
+                f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}",
+                "--max-value",
+                str(F_max),
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/scaling-F-{i}",
         )
+        print("Get scaling F")
 
         # Get max min_D
-        run_mr_job(
-            GetMax,
-            [f"hdfs://localhost:9000/user/mackop/clustering-output/D-{i}"],
-            f"hdfs://localhost:9000/user/mackop/clustering-output/max-D-{i}",
+        return_value = run_mr_job_hadoop(
+            GetMax, [f"hdfs://localhost:9000/user/mackop/clustering-output/D-{i}"], None
         )
+        D_max = get_max_value(return_value)
+        print("Get max min_D")
 
-        # Scaling D
-        run_mr_job(
+        # Get scaling D
+        run_mr_job_hadoop(
             Scaling,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/D-{i}",
-                "--max-value-path",
-                f"hdfs://localhost:9000/user/mackop/clustering-output/max-D-{i}",
+                "--max-value",
+                str(D_max),
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/scaling-D-{i}",
         )
+        print("Get scaling D")
 
-        # Calculate sum F, D
-        result_data = run_mr_job(
+        # Calculate sum scaling F, scaling D
+        result_data = run_mr_job_hadoop(
             SumFD,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/scaling-F-{i}",
@@ -186,41 +206,45 @@ def run_clustering(input_file_path, number_of_clusters=3):
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/F-D-{i}",
         )
+        print("Calculate sum scaling F, scaling D")
 
         # Calculate max F_D
-        run_mr_job(
+        run_mr_job_hadoop(
             GetMax,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/F-D-{i}",
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/max-F-D-{i}",
         )
+        print("Calculate max F_D")
 
         # Create another centroid
-        run_mr_job(
+        run_mr_job_hadoop(
             CreateCentroid,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/matrix-{i}",
                 f"hdfs://localhost:9000/user/mackop/clustering-output/max-F-D-{i}",
             ],
-            f"hdfs://localhost:9000/user/mackop/clustering-output/centroid-{i}",
+            f"hdfs://localhost:9000/user/mackop/clustering-output/centroid-{i + 1}",
             True,
         )
-        create_centroids_list(i + 1)
+        centroids = create_centroids_list(i + 1)
+        print("Create another centroid")
 
         # Calculate distance between new centroid and other users
-        result_data = run_mr_job(
+        result_data = run_mr_job_hadoop(
             DistanceBetweenUsersCentroid,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/matrix-{i}",
-                "--first-centroid-path",
-                f"hdfs://localhost:9000/user/mackop/input/centroid-{i}.txt",
+                "--centroids-path",
+                f"hdfs://localhost:9000/user/mackop/input/centroid-{i + 1}.txt",
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/D_-{i}",
         )
+        print("Calculate distance between new centroid and other users")
 
         # Calculate M nearest points
-        run_mr_job(
+        run_mr_job_hadoop(
             MNearestPoints,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/D_-{i}",
@@ -229,9 +253,10 @@ def run_clustering(input_file_path, number_of_clusters=3):
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/M-nearest-points-{i}",
         )
+        print("Calculate M nearest points")
 
         # Discard nearest points in user-item matrix
-        result_data = run_mr_job(
+        result_data = run_mr_job_hadoop(
             DiscardNearestPoints,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/matrix-{i}",
@@ -239,12 +264,13 @@ def run_clustering(input_file_path, number_of_clusters=3):
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/matrix-{i+1}",
         )
+        print("Discard nearest points in user-item matrix")
         if result_data == []:
             print("Break")
             break
 
         # Discard nearest points in F
-        run_mr_job(
+        run_mr_job_hadoop(
             DiscardNearestPoints,
             [
                 f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}",
@@ -252,81 +278,69 @@ def run_clustering(input_file_path, number_of_clusters=3):
             ],
             f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i+1}",
         )
+        print("Discard nearest points in F")
 
     # KMeans
-    count = 1
+    count = 0
+    i = number_of_clusters - 1
     while True:
         print(f"\nLoop {count}")
-        count += 1
 
         # Calculate distance between users and centroids
-        result_data = run_mr_job(
+        run_mr_job_hadoop(
             DistanceBetweenUsersCentroid,
             [
-                "./clustering/output/user_item_matrix_.txt",
-                "--first-centroid-path",
-                "./clustering/output/centroids.txt",
+                f"hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
+                "--centroids-path",
+                f"hdfs://localhost:9000/user/mackop/input/centroids-{i}.txt",
                 "--return-centroid-id",
                 "True",
             ],
+            f"hdfs://localhost:9000/user/mackop/clustering-output/full-matrix-{count}",
         )
-        write_data_to_file("./clustering/output/user_item_matrix.txt", result_data)
+        print("Calculate distance between users and centroids")
 
         # Update centroids
-        result_data = run_mr_job(
-            UpdateCentroids, ["./clustering/output/user_item_matrix.txt"]
+        updated_centroids = run_mr_job_hadoop(
+            UpdateCentroids,
+            [
+                f"hdfs://localhost:9000/user/mackop/clustering-output/full-matrix-{count}"
+            ],
+            f"hdfs://localhost:9000/user/mackop/clustering-output/centroids-{i+1}",
+            True,
         )
-        write_data_to_file("./clustering/output/new_centroids.txt", result_data)
+        print("Update centroids")
 
         # Check if has converged
-        with open("./clustering/output/new_centroids.txt", "r") as new_centroids, open(
-            "./clustering/output/centroids.txt", "r"
-        ) as old_centroids:
-            new_centroids_tuples = []
-            old_centroids_tuples = []
-            for line in new_centroids:
-                key, value = line.strip().split("\t")
-                new_centroids_tuples.append(tuple(value.strip().split("|")))
-            for line in old_centroids:
-                key, value = line.strip().split("\t")
-                old_centroids_tuples.append(tuple(value.strip().split("|")))
+        updated_centroids_tuples = []
+        centroids_tuples = []
+        for line in updated_centroids:
+            _, value = line.strip().split("\t")
+            updated_centroids_tuples.append(tuple(value.strip().split("|")))
+        for line in centroids:
+            _, value = line.strip().split("\t")
+            centroids_tuples.append(tuple(value.strip().split("|")))
 
-            new_centroids_tuples = tuple(new_centroids_tuples)
-            old_centroids_tuples = tuple(old_centroids_tuples)
-            if set(new_centroids_tuples) == set(old_centroids_tuples):
-                break
+        updated_centroids_tuples = tuple(updated_centroids_tuples)
+        centroids_tuples = tuple(centroids_tuples)
+        if set(updated_centroids_tuples) == set(centroids_tuples):
+            print("Converged\n")
+            break
 
-        # Save new centroids to file
-        with open("./clustering/output/new_centroids.txt", "r") as new_centroids, open(
-            "./clustering/output/centroids.txt", "w"
-        ) as old_centroids:
-            for line in new_centroids:
-                old_centroids.write(line)
+        centroids = updated_centroids
+        count += 1
+        i += 1
 
     # Assign labels
-    run_mr_job(
+    run_mr_job_hadoop(
         Label,
-        [
-            "hdfs://localhost:9000/user/mackop/clustering-output/matrix",
-        ],
+        [f"hdfs://localhost:9000/user/mackop/clustering-output/full-matrix-{count}"],
         "hdfs://localhost:9000/user/mackop/clustering-output/labels",
+        True,
     )
+    print("Assign labels")
 
 
 if __name__ == "__main__":
-    # Create users, items files
-    input_file_path = pd.read_csv(
-        "./input/input_file_path copy.txt",
-        sep="\t",
-        names=["key", "values"],
-        dtype="str",
-        usecols=["key"],
-    )
-    input_file_path = input_file_path["key"].str.split(";", expand=True)
-    users = input_file_path[0]
-    items = input_file_path[1]
-
-    users.drop_duplicates().to_csv("./input/users.txt", index=False, header=False)
-    items.drop_duplicates().to_csv("./input/items.txt", index=False, header=False)
-
-    run_clustering("./input/input_file_path copy.txt")
+    input_file_path = "./input/input_file_copy.txt"
+    run_clustering(input_file_path, number_of_clusters=3)
