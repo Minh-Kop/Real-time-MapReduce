@@ -22,7 +22,10 @@ from .label import Label
 
 def run_clustering(input_file, number_of_clusters=3):
     # Calculate average rating
-    result_data = run_mr_job(AvgRating, [input_file])
+    result_data = run_mr_job(
+        AvgRating,
+        [input_file],
+    )
     write_data_to_file("./clustering/output/avg_ratings.txt", result_data)
 
     # Create user-item matrix
@@ -39,7 +42,10 @@ def run_clustering(input_file, number_of_clusters=3):
     write_data_to_file("./clustering/output/user_item_matrix_.txt", result_data)
 
     # Calculate importance
-    result_data = run_mr_job(Importance, [input_file])
+    result_data = run_mr_job(
+        Importance,
+        [input_file],
+    )
     write_data_to_file("./clustering/output/F.txt", result_data)
 
     # Find most importance
@@ -67,7 +73,7 @@ def run_clustering(input_file, number_of_clusters=3):
         DistanceBetweenUsersCentroid,
         [
             "./clustering/output/user_item_matrix.txt",
-            "--first-centroid-path",
+            "--centroids-path",
             "./clustering/output/centroids.txt",
         ],
     )
@@ -104,43 +110,44 @@ def run_clustering(input_file, number_of_clusters=3):
             DistanceBetweenUsersCentroid,
             [
                 "./clustering/output/user_item_matrix.txt",
-                "--first-centroid-path",
+                "--centroids-path",
                 "./clustering/output/centroids.txt",
             ],
         )
         write_data_to_file("./clustering/output/D.txt", result_data)
 
         # Get max F
-        get_max("./clustering/output/F.txt", "./clustering/output/max_F.txt")
+        F_max = get_max("./clustering/output/F.txt", "./clustering/output/max_F.txt")
 
         # Scaling F
         result_data = run_mr_job(
             Scaling,
             [
                 "./clustering/output/F.txt",
-                "--max-value-path",
-                "./clustering/output/max_F.txt",
+                "--max-value",
+                str(F_max),
             ],
         )
         write_data_to_file("./clustering/output/F.txt", result_data)
 
         # Get max min_D
-        get_max("./clustering/output/D.txt", "./clustering/output/max_D.txt")
+        D_max = get_max("./clustering/output/D.txt", "./clustering/output/max_D.txt")
 
         # Scaling D
         result_data = run_mr_job(
             Scaling,
             [
                 "./clustering/output/D.txt",
-                "--max-value-path",
-                "./clustering/output/max_D.txt",
+                "--max-value",
+                str(D_max),
             ],
         )
         write_data_to_file("./clustering/output/D.txt", result_data)
 
         # Calculate sum F, D
         result_data = run_mr_job(
-            SumFD, ["./clustering/output/F.txt", "./clustering/output/D.txt"]
+            SumFD,
+            ["./clustering/output/F.txt", "./clustering/output/D.txt"],
         )
         write_data_to_file("./clustering/output/F_D.txt", result_data)
 
@@ -163,7 +170,7 @@ def run_clustering(input_file, number_of_clusters=3):
             DistanceBetweenUsersCentroid,
             [
                 "./clustering/output/user_item_matrix.txt",
-                "--first-centroid-path",
+                "--centroids-path",
                 "./clustering/output/new_centroid.txt",
             ],
         )
@@ -208,7 +215,7 @@ def run_clustering(input_file, number_of_clusters=3):
             DistanceBetweenUsersCentroid,
             [
                 "./clustering/output/user_item_matrix_.txt",
-                "--first-centroid-path",
+                "--centroids-path",
                 "./clustering/output/centroids.txt",
                 "--return-centroid-id",
                 "True",
@@ -217,27 +224,27 @@ def run_clustering(input_file, number_of_clusters=3):
         write_data_to_file("./clustering/output/user_item_matrix.txt", result_data)
 
         # Update centroids
-        result_data = run_mr_job(
-            UpdateCentroids, ["./clustering/output/user_item_matrix.txt"]
+        updated_centroids = run_mr_job(
+            UpdateCentroids,
+            ["./clustering/output/user_item_matrix.txt"],
         )
-        write_data_to_file("./clustering/output/new_centroids.txt", result_data)
+        write_data_to_file("./clustering/output/new_centroids.txt", updated_centroids)
 
         # Check if has converged
-        with open("./clustering/output/new_centroids.txt", "r") as new_centroids, open(
-            "./clustering/output/centroids.txt", "r"
-        ) as old_centroids:
-            new_centroids_tuples = []
-            old_centroids_tuples = []
-            for line in new_centroids:
-                key, value = line.strip().split("\t")
-                new_centroids_tuples.append(tuple(value.strip().split("|")))
-            for line in old_centroids:
-                key, value = line.strip().split("\t")
-                old_centroids_tuples.append(tuple(value.strip().split("|")))
+        with open("./clustering/output/centroids.txt", "r") as centroids:
+            updated_centroids_tuples = []
+            centroids_tuples = []
+            for line in updated_centroids:
+                _, value = line.strip().split("\t")
+                updated_centroids_tuples.append(tuple(value.strip().split("|")))
+            for line in centroids:
+                _, value = line.strip().split("\t")
+                centroids_tuples.append(tuple(value.strip().split("|")))
 
-            new_centroids_tuples = tuple(new_centroids_tuples)
-            old_centroids_tuples = tuple(old_centroids_tuples)
-            if set(new_centroids_tuples) == set(old_centroids_tuples):
+            updated_centroids_tuples = tuple(updated_centroids_tuples)
+            centroids_tuples = tuple(centroids_tuples)
+            if set(updated_centroids_tuples) == set(centroids_tuples):
+                print("Converged\n")
                 break
 
         # Save new centroids to file
@@ -248,7 +255,10 @@ def run_clustering(input_file, number_of_clusters=3):
                 old_centroids.write(line)
 
     # Assign labels
-    result_data = run_mr_job(Label, ["./clustering/output/user_item_matrix.txt"])
+    result_data = run_mr_job(
+        Label,
+        ["./clustering/output/user_item_matrix.txt"],
+    )
     write_data_to_file("./clustering/output/labels.txt", result_data)
 
 

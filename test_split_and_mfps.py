@@ -1,31 +1,16 @@
-from split_input import SplitInput
 import os
+import sys
 import time
+
 import numpy as np
+
+sys.path.append(os.path.abspath("./util"))
+
+from custom_util import run_mr_job, write_data_to_file
+from split_input import SplitInput
 from mfps.main import run_mfps
 from clustering.main import run_clustering
-
-
-def create_path(filename):
-    current_directory = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(current_directory, filename)
-
-
-def run_mr_job(mr_job_class, input_args):
-    mr_job = mr_job_class(args=input_args)
-    with mr_job.make_runner() as runner:
-        runner.run()
-        data = []
-        for key, value in mr_job.parse_output(runner.cat_output()):
-            data.append(f"{key}\t{value}")
-        return data
-
-
-def write_data_to_file(filename, data, mode="w"):
-    output_file = open(filename, mode)
-    for el in data:
-        output_file.writelines(el)
-    output_file.close()
+import clustering.main_hadoop as main_hadoop
 
 
 if __name__ == "__main__":
@@ -66,8 +51,10 @@ if __name__ == "__main__":
 
     #     print("time: " + str(end_mr - start_mr))
 
-    run_mfps(
-        "hdfs://localhost:9000/user/mackop/input/input_file_copy.txt",
-        "hdfs://localhost:9000/user/mackop/input/avg_ratings.txt",
-        "./output/mfps.txt",
-    )
+    input_file_path = "./input/input_file_copy.txt"
+    # run_mfps(
+    #     input_file_path,
+    #     "hdfs://localhost:9000/user/mackop/input/avg_ratings.txt",
+    #     "./output/mfps.txt",
+    # )
+    main_hadoop.run_clustering(input_file_path, number_of_clusters=3)

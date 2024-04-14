@@ -1,7 +1,4 @@
-# import sys
-
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
@@ -10,40 +7,27 @@ class Scaling(MRJob):
 
     def configure_args(self):
         super(Scaling, self).configure_args()
-        self.add_file_arg("--max-value-path", help="Path to most max value file")
+        self.add_passthru_arg("--max-value", type=float)
 
-    def scaling_mapper(self, _, line):
+    def mapper(self, _, line):
         user, value = line.strip().split("\t")
         yield user, value
 
-    def getMax(self, filename):
-        with open(filename, "r") as file:
-            line = file.readline()
-            _, value_max = line.strip().split("\t")
-
-        return value_max
-
-    def scaling_reducer_init(self):
-        max_value_path = self.options.max_value_path
-        self.value_max = self.getMax(max_value_path)
-
-    def scaling_reducer(self, user, value):
-        value_scale = float(list(value)[0]) / float(self.value_max)
+    def reducer(self, user, value):
+        max_value = self.options.max_value
+        value_scale = float(list(value)[0]) / float(max_value)
         yield user, str(value_scale)
 
-    def steps(self):
-        return [
-            MRStep(
-                mapper=self.scaling_mapper,
-                reducer_init=self.scaling_reducer_init,
-                reducer=self.scaling_reducer,
-            ),
-        ]
 
+# import sys
 
 if __name__ == "__main__":
+    # i = 0
     # sys.argv[1:] = [
-    #     './output/importances.txt',
-    #     '--max-value-path', './output/new_scale_file.txt',
+    #     "-r",
+    #     "hadoop",
+    #     f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}",
+    #     "--max-value",
+    #     str(float(6)),
     # ]
     Scaling().run()

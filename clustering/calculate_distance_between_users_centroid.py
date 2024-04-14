@@ -12,7 +12,7 @@ class DistanceBetweenUsersCentroid(MRJob):
 
     def configure_args(self):
         super(DistanceBetweenUsersCentroid, self).configure_args()
-        self.add_file_arg("--first-centroid-path", help="Path to init centroid file")
+        self.add_file_arg("--centroids-path", help="Path to init centroid file")
         self.add_passthru_arg("--return-centroid-id", type=bool, default=False)
 
     def distance_between_users_centroid_mapper(self, _, line):
@@ -40,7 +40,7 @@ class DistanceBetweenUsersCentroid(MRJob):
 
     def distance_between_users_centroid_reducer_init(self):
         self.centroid_ids, self.centroids = self.getInitCentroid(
-            self.options.first_centroid_path
+            self.options.centroids_path
         )
 
     def distance_between_users_centroid_reducer(self, user, value):
@@ -74,6 +74,6 @@ class DistanceBetweenUsersCentroid(MRJob):
 if __name__ == "__main__":
     # sys.argv[1:] = [
     #     './output/user_item_matrix.txt',
-    #     '--first-centroid-path', './output/centroids.txt',
+    #     '--centroids-path', './output/centroids.txt',
     # ]
     DistanceBetweenUsersCentroid().run()
