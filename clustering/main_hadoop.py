@@ -44,7 +44,8 @@ def run_clustering(input_file_path, number_of_clusters=3):
     run_mr_job_hadoop(
         AvgRating,
         [input_file_path],
-        "hdfs://localhost:9000/user/mackop/clustering-output/avg",
+        "hdfs://localhost:9000/user/mackop/clustering-output/avg-ratings",
+        True,
     )
     print("Calculate average rating")
 
@@ -53,9 +54,9 @@ def run_clustering(input_file_path, number_of_clusters=3):
         UserItemMatrix,
         [
             input_file_path,
-            "hdfs://localhost:9000/user/mackop/clustering-output/avg",
+            "hdfs://localhost:9000/user/mackop/clustering-output/avg-ratings",
             "--items-path",
-            "./input/items.txt",
+            "hdfs://localhost:9000/user/mackop/input/items.txt",
         ],
         "hdfs://localhost:9000/user/mackop/clustering-output/full-matrix",
     )
@@ -339,6 +340,8 @@ def run_clustering(input_file_path, number_of_clusters=3):
         True,
     )
     print("Assign labels")
+
+    return i
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import re
+import os
 
 
 def write_data_to_file(filename, data, mode="w"):
@@ -8,13 +9,18 @@ def write_data_to_file(filename, data, mode="w"):
     output_file.close()
 
 
-def get_txt_filename(output_path):
-    pattern = "\/([^\/]+)$"
-    match = re.search(pattern, output_path)
+def get_txt_filename(file_path):
+    pattern = "\/([^\/\.]+)(\..*)?$"
+    match = re.search(pattern, file_path)
     if match:
         name = match.group(1)
         return f"{name}.txt"
     return None
+
+
+def put_files_to_hdfs(local_path, hdfs_path):
+    os.system(f"hdfs dfs -rm -r {hdfs_path}")
+    os.system(f"hdfs dfs -put {local_path} {hdfs_path}")
 
 
 def run_mr_job(mr_job_class, input_args):
