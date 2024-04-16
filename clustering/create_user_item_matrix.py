@@ -1,4 +1,5 @@
-import sys
+# import sys
+
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
@@ -9,25 +10,24 @@ class UserItemMatrix(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def create_user_item_matrix_mapper(self, _, line):
-        key, value = line.strip().split('\t')
-        key = key.strip().split(';')
-        if (len(key) == 1):
+        key, value = line.strip().split("\t")
+        key = key.strip().split(";")
+        if len(key) == 1:
             yield key[0], value
             return
         user, item = key
-        rating = value.strip().split(';')[0]
+        rating = value.strip().split(";")[0]
 
         yield user, f"{item};{rating}"
 
     def configure_args(self):
         super(UserItemMatrix, self).configure_args()
-        self.add_file_arg('--items-path', help='Path to the items file')
+        self.add_file_arg("--items-path", help="Path to the items file")
 
     def create_item_list(self, filename):
         items = []
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             for line in file:
-                # item = line.strip(' \t\n')
                 item = line.strip()  # Remove leading/trailing whitespaces and newlines
                 items.append(float(item))
         return items
@@ -37,8 +37,8 @@ class UserItemMatrix(MRJob):
         self.items = self.create_item_list(items_path)
 
     def create_user_item_matrix_reducer(self, user, values):
-        values = [value.strip().split(';') for value in values]
-        values = np.array(values, dtype='object')
+        values = [value.strip().split(";") for value in values]
+        values = np.array(values, dtype="object")
         # Find rows with length 1
         rows_to_remove = np.array([len(row) == 1 for row in values])
 
@@ -50,8 +50,6 @@ class UserItemMatrix(MRJob):
         coordinates = values[~rows_to_remove]
         coordinates = np.vstack(coordinates).astype(float)
 
-        # avg_rating = np.sum(coordinates[:, 1]) / float(len(coordinates))
-
         result = []
         for item in self.items:
             found = False
@@ -62,20 +60,26 @@ class UserItemMatrix(MRJob):
                     break
             if not found:
                 result.append(f"{item};{avg_rating}")
-        result = '|'.join(result)
+        result = "|".join(result)
         yield user, result
 
     def steps(self):
         return [
-            MRStep(mapper=self.create_user_item_matrix_mapper,
-                   reducer_init=self.create_user_item_matrix_reducer_init, reducer=self.create_user_item_matrix_reducer)
+            MRStep(
+                mapper=self.create_user_item_matrix_mapper,
+                reducer_init=self.create_user_item_matrix_reducer_init,
+                reducer=self.create_user_item_matrix_reducer,
+            )
         ]
 
 
-if __name__ == '__main__':
-    sys.argv[1:] = [
-        '../input_file.txt',
-        '--items-path', 'items.txt',
-        '--avg-ratings-path', 'calculate_avg_rating.txt',
-    ]
+if __name__ == "__main__":
+    # sys.argv[1:] = [
+    #     "./input/input_file_copy.txt",
+    #     "./clustering/output/avg_ratings.txt",
+    #     "--items-path",
+    #     "./input/items.txt",
+    #     "-r",
+    #     "hadoop",
+    # ]
     UserItemMatrix().run()

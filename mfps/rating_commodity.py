@@ -1,14 +1,15 @@
-import sys
+# import sys
+
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
-class rating_commodity(MRJob):
+class RatingCommodity(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def configure_args(self):
-        super(rating_commodity, self).configure_args()
+        super(RatingCommodity, self).configure_args()
         self.add_file_arg("--users-path", help="Path to the users file")
 
     def create_user_list(self, filename):
@@ -51,9 +52,9 @@ class rating_commodity(MRJob):
 
 
 if __name__ == "__main__":
-    sys.argv[1:] = [
-        "--users-path",
-        "../users.txt",
-        "../input_file.txt",
-    ]
-    rating_commodity().run()
+    # sys.argv[1:] = [
+    #     "--users-path",
+    #     "../users.txt",
+    #     "../input_file.txt",
+    # ]
+    RatingCommodity().run()

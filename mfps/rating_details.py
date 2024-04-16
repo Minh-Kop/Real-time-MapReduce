@@ -1,15 +1,16 @@
-import sys
+# import sys
+
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 import pandas as pd
 
 
-class rating_details(MRJob):
+class RatingDetails(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def configure_args(self):
-        super(rating_details, self).configure_args()
+        super(RatingDetails, self).configure_args()
         self.add_file_arg("--avg-rating-path", help="Path to average rating file")
 
     def rating_details_mapper(self, _, line):
@@ -61,9 +62,9 @@ class rating_details(MRJob):
 
 
 if __name__ == "__main__":
-    sys.argv[1:] = [
-        "--combinations-path",
-        "./create_combinations.txt",
-        "./rating_usefulness.txt",
-    ]
-    rating_details().run()
+    # sys.argv[1:] = [
+    #     "--combinations-path",
+    #     "./create_combinations.txt",
+    #     "./rating_usefulness.txt",
+    # ]
+    RatingDetails().run()
