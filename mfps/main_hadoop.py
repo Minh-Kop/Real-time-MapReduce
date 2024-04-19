@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.abspath("./util"))
 
-from custom_util import run_mr_job_hadoop
+from custom_util import run_mr_job_hadoop, env_dict
 from .create_combinations import CreateCombinations
 from .rating_commodity import RatingCommodity
 from .rating_usefulness import RatingUsefulness
@@ -12,12 +12,15 @@ from .rating_time import RatingTime
 from .calculate_mfps import MFPS
 
 
+HADOOP_PATH = env_dict["hadoop_path"]
+
+
 def run_mfps(input_path, avg_ratings_path, output_path):
     # Create combination
     run_mr_job_hadoop(
         CreateCombinations,
         [input_path],
-        "hdfs://localhost:9000/user/mackop/mfps-output/combination",
+        f"{HADOOP_PATH}/mfps-output/combination",
     )
     print("Create combination")
 
@@ -25,7 +28,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
     run_mr_job_hadoop(
         RatingCommodity,
         [input_path, "--users-path", avg_ratings_path],
-        "hdfs://localhost:9000/user/mackop/mfps-output/rating-commodity",
+        f"{HADOOP_PATH}/mfps-output/rating-commodity",
         True,
     )
     print("Calculate rating commodity")
@@ -36,9 +39,9 @@ def run_mfps(input_path, avg_ratings_path, output_path):
         [
             input_path,
             "--rating-commodity-path",
-            "hdfs://localhost:9000/user/mackop/input/rating-commodity.txt",
+            f"{HADOOP_PATH}/input/rating-commodity.txt",
         ],
-        "hdfs://localhost:9000/user/mackop/mfps-output/rating-usefulness",
+        f"{HADOOP_PATH}/mfps-output/rating-usefulness",
     )
     print("Calculate rating usefulness")
 
@@ -46,11 +49,11 @@ def run_mfps(input_path, avg_ratings_path, output_path):
     run_mr_job_hadoop(
         RatingDetails,
         [
-            "hdfs://localhost:9000/user/mackop/mfps-output/combination",
+            f"{HADOOP_PATH}/mfps-output/combination",
             "--avg-rating-path",
             avg_ratings_path,
         ],
-        "hdfs://localhost:9000/user/mackop/mfps-output/rating-detail",
+        f"{HADOOP_PATH}/mfps-output/rating-detail",
     )
     print("Calculate rating detail")
 
@@ -58,9 +61,9 @@ def run_mfps(input_path, avg_ratings_path, output_path):
     run_mr_job_hadoop(
         RatingTime,
         [
-            "hdfs://localhost:9000/user/mackop/mfps-output/combination",
+            f"{HADOOP_PATH}/mfps-output/combination",
         ],
-        "hdfs://localhost:9000/user/mackop/mfps-output/rating-time",
+        f"{HADOOP_PATH}/mfps-output/rating-time",
     )
     print("Calculate rating time")
 
@@ -68,10 +71,10 @@ def run_mfps(input_path, avg_ratings_path, output_path):
     return_values = run_mr_job_hadoop(
         MFPS,
         [
-            "hdfs://localhost:9000/user/mackop/mfps-output/rating-commodity",
-            "hdfs://localhost:9000/user/mackop/mfps-output/rating-usefulness",
-            "hdfs://localhost:9000/user/mackop/mfps-output/rating-detail",
-            "hdfs://localhost:9000/user/mackop/mfps-output/rating-time",
+            f"{HADOOP_PATH}/mfps-output/rating-commodity",
+            f"{HADOOP_PATH}/mfps-output/rating-usefulness",
+            f"{HADOOP_PATH}/mfps-output/rating-detail",
+            f"{HADOOP_PATH}/mfps-output/rating-time",
         ],
         output_path,
     )

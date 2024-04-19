@@ -1,6 +1,12 @@
 import re
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+env_dict = {"hadoop_path": os.getenv("HADOOP_PATH")}
+
 
 def write_data_to_file(filename, data, mode="w"):
     output_file = open(filename, mode)
