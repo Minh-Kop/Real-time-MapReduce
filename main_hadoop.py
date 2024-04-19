@@ -5,9 +5,18 @@ sys.path.append(os.path.abspath("./util"))
 
 import pandas as pd
 
-from custom_util import write_data_to_file, get_txt_filename, put_files_to_hdfs
+from custom_util import (
+    env_dict,
+    write_data_to_file,
+    get_txt_filename,
+    put_files_to_hdfs,
+)
 from clustering.main_hadoop import run_clustering
 from mfps.main_hadoop import run_mfps
+
+
+HADOOP_PATH = env_dict["hadoop_path"]
+NUMBER_OF_CLUSTERS = 3
 
 
 def create_input_file(input_path, output_path):
@@ -88,12 +97,9 @@ def split_files_by_label(input_file_path, num):
 
 
 if __name__ == "__main__":
-    HDFS_PATH = "hdfs://localhost:9000/user/mackop"
-    NUMBER_OF_CLUSTERS = 3
-
     source_file_path = "./input/u.data"
     input_file_path = "./input/input_file_copy.txt"
-    hdfs_input_file_path = f"{HDFS_PATH}/input/{get_txt_filename(input_file_path)}"
+    hdfs_input_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(input_file_path)}"
 
     # create_input_file(input_path=source_file_path, output_path=input_file_path)
     put_files_to_hdfs(input_file_path, hdfs_input_file_path)
@@ -110,9 +116,9 @@ if __name__ == "__main__":
     mfps_result = []
     for index in range(NUMBER_OF_CLUSTERS):
 
-        input_path = f"{HDFS_PATH}/input/input-file-{index}.txt"
-        avg_ratings_path = f"{HDFS_PATH}/input/avg-ratings-{index}.txt"
-        output_path = f"{HDFS_PATH}/mfps-output/mfps-{index}"
+        input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
+        avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
+        output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
 
         result_data = run_mfps(
             input_path=input_path,
