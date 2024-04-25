@@ -107,7 +107,7 @@ if __name__ == "__main__":
     create_users_items_file(input_file_path)
 
     # Clustering
-    num = run_clustering(input_file_path, NUMBER_OF_CLUSTERS)
+    num = run_clustering(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
 
     # Split input file
     split_files_by_label(input_file_path, num=num)

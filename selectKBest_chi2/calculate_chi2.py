@@ -1,8 +1,6 @@
-import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
-import numpy as np
 
 
 class ChiSquare(MRJob):
@@ -27,9 +25,6 @@ class ChiSquare(MRJob):
 
         yield user, f"{(E-O)**2/E}"
 
-    def sum_Chi2_mapper(self, user, chi2):
-        yield user, chi2
-
     def sum_Chi2_reducer(self, user, chi2):
         total_sum = sum(map(float, chi2))
         yield user, f"{total_sum}"
@@ -41,7 +36,10 @@ class ChiSquare(MRJob):
                 reducer=self.calculate_Chi2_reducer,
             ),
             MRStep(
-                mapper=self.sum_Chi2_mapper,
                 reducer=self.sum_Chi2_reducer,
             ),
         ]
+
+
+if __name__ == "__main__":
+    ChiSquare.run()

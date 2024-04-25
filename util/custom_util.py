@@ -61,7 +61,7 @@ def run_mr_job_hadoop(mr_job_class, input_args, output_path, create_txt_file=Fal
             file_path = f"./hadoop_output/{filename}"
             write_data_to_file(file_path, data)
 
-            hdfs_path = f"hdfs://localhost:9000/user/mackop/input/{filename}"
+            hdfs_path = f"{env_dict['hadoop_path']}/input/{filename}"
             runner.fs.rm(hdfs_path)
             runner.fs.put(file_path, hdfs_path)
 
