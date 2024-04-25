@@ -11,7 +11,7 @@ from custom_util import (
     get_txt_filename,
     put_files_to_hdfs,
 )
-from clustering.main_hadoop import run_clustering
+from clustering import run_proposal_1_clustering
 from mfps.main_hadoop import run_mfps
 
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     create_users_items_file(input_file_path)
 
     # Clustering
-    num = run_clustering(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
+    num = run_proposal_1_clustering(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
 
     # Split input file
     split_files_by_label(input_file_path, num=num)
