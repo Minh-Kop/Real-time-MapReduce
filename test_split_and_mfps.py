@@ -6,11 +6,13 @@ import numpy as np
 
 sys.path.append(os.path.abspath("./util"))
 
-from custom_util import run_mr_job, write_data_to_file
+from custom_util import run_mr_job, write_data_to_file, env_dict
 from split_input import SplitInput
-from mfps.main import run_mfps
-from clustering.main import run_clustering
-import clustering.main_hadoop as main_hadoop
+
+# from selectKBest_chi2.main_hadoop import run_clustering_chi2
+from selectKBest_chi2 import run_clustering_chi2
+
+HADOOP_PATH = env_dict["hadoop_path"]
 
 
 if __name__ == "__main__":
@@ -51,10 +53,5 @@ if __name__ == "__main__":
 
     #     print("time: " + str(end_mr - start_mr))
 
-    input_file_path = "./input/input_file_copy.txt"
-    # run_mfps(
-    #     input_file_path,
-    #     "hdfs://localhost:9000/user/mackop/input/avg_ratings.txt",
-    #     "./output/mfps.txt",
-    # )
-    main_hadoop.run_clustering(input_file_path, number_of_clusters=3)
+    hdfs_input_file_path = f"{HADOOP_PATH}/input/input_file_copy.txt"
+    run_clustering_chi2(hdfs_input_file_path)

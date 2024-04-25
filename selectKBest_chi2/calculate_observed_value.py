@@ -1,4 +1,3 @@
-import sys
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
@@ -17,31 +16,26 @@ class ObservedValue(MRJob):
             values = values.strip().split("|")
             for val in values:
                 item, rating = val.strip().split(";")
-                yield item, f"{user};{rating}"
+                yield str(int(float(item))), f"{user};{rating}"
 
     def add_label_to_user_reducer(self, item, values):
         values = list(values)
         for i in values:
             if len(i.strip().split("|")) > 1:
                 label = i
+                values.remove(i)
+                break
 
         for user_rating in values:
-            if len(user_rating.strip().split("|")) == 1:
-                user, rating = user_rating.split(";")
-                if user == "166":
-                    a = 0
-                yield f"{label};{user}", rating
+            user, rating = user_rating.split(";")
+            yield f"{label};{user}", rating
 
-    def calculate_O_mapper(self, label_user, rating):
-        yield label_user, rating
-
-    def calculate_O_reducer(self, label_user, rating):
+    def calculate_observed_value_reducer(self, label_user, ratings):
         label, user = label_user.strip().split(";")
-        new_rate = np.array(list(rating))
-        if user == "166":
-            a = 0
-        total_sum = np.sum(new_rate, dtype=float)
-        yield user, f"{label};{total_sum}|o"
+        ratings = np.array(list(ratings))
+
+        sum_ratings = np.sum(ratings, dtype=float)
+        yield user, f"{label};{sum_ratings}|o"
 
     def steps(self):
         return [
@@ -50,7 +44,10 @@ class ObservedValue(MRJob):
                 reducer=self.add_label_to_user_reducer,
             ),
             MRStep(
-                mapper=self.calculate_O_mapper,
-                reducer=self.calculate_O_reducer,
+                reducer=self.calculate_observed_value_reducer,
             ),
         ]
+
+
+if __name__ == "__main__":
+    ObservedValue.run()
