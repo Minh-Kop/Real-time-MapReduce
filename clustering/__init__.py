@@ -1,1 +1,2 @@
-from .main import run_clustering
+from .proposal_1 import run_proposal_1_clustering
+from .proposal_2_chi2 import run_clustering_proposal_2_chi2

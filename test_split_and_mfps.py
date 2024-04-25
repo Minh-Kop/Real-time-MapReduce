@@ -10,7 +10,7 @@ from custom_util import run_mr_job, write_data_to_file, env_dict
 from split_input import SplitInput
 
 # from selectKBest_chi2.main_hadoop import run_clustering_chi2
-from selectKBest_chi2 import run_clustering_chi2
+from clustering import run_clustering_proposal_2_chi2
 
 HADOOP_PATH = env_dict["hadoop_path"]
 
@@ -54,4 +54,4 @@ if __name__ == "__main__":
     #     print("time: " + str(end_mr - start_mr))
 
     hdfs_input_file_path = f"{HADOOP_PATH}/input/input_file_copy.txt"
-    run_clustering_chi2(hdfs_input_file_path)
+    run_clustering_proposal_2_chi2(hdfs_input_file_path)

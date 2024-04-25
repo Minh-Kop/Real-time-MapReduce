@@ -3,11 +3,11 @@ import sys
 import re
 
 sys.path.append(os.path.abspath("./clustering/util"))
-
+sys.path.append(os.path.abspath("./clustering/common"))
 
 from custom_util import run_mr_job_hadoop, env_dict
+from create_user_item_matrix import UserItemMatrix
 from .calculate_avg_rating import AvgRating
-from .create_user_item_matrix import UserItemMatrix
 from .create_importance import Importance
 from .get_max import GetMax
 from .create_centroid import CreateCentroid

@@ -5,9 +5,10 @@ import pandas as pd
 import numpy as np
 
 sys.path.append(os.path.abspath("./util"))
+sys.path.append(os.path.abspath("./clustering/common"))
 
 from custom_util import env_dict, run_mr_job_hadoop
-from .create_user_item_matrix import UserItemMatrix
+from create_user_item_matrix import UserItemMatrix
 from .calculate_avg_and_sum import AvgAndSum
 from .calculate_class_probability import ClassProbability
 from .calculate_expected_value import ExpectedValue
