@@ -62,7 +62,6 @@ def split_files_by_label(input_file_path, num):
         dtype="str",
         names=["user", "label"],
     )
-    labels["label"] = labels["label"].str.split("|", expand=True)[0]
 
     joined_df = pd.merge(input_file, labels, on="user").drop(columns="user")
     joined_df = joined_df.set_index("label")
@@ -102,31 +101,31 @@ if __name__ == "__main__":
     hdfs_input_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(input_file_path)}"
 
     # create_input_file(input_path=source_file_path, output_path=input_file_path)
-    put_files_to_hdfs(input_file_path, hdfs_input_file_path)
+    # put_files_to_hdfs(input_file_path, hdfs_input_file_path)
 
-    create_users_items_file(input_file_path)
+    # create_users_items_file(input_file_path)
 
     # Clustering
     num = run_proposal_1_clustering(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
 
-    # Split input file
-    split_files_by_label(input_file_path, num=num)
-
-    # MFPS
-    mfps_result = []
-    for index in range(NUMBER_OF_CLUSTERS):
-
-        input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
-        avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
-        output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
-
-        result_data = run_mfps(
-            input_path=input_path,
-            avg_ratings_path=avg_ratings_path,
-            output_path=output_path,
-        )
-        mfps_result.append(result_data)
-    mfps_result = [line for row in mfps_result for line in row]
-
-    output_path = f"./hadoop_output/mfps.txt"
-    write_data_to_file(output_path, mfps_result)
+#     # Split input file
+#     split_files_by_label(input_file_path, num=num)
+# 
+#     # MFPS
+#     mfps_result = []
+#     for index in range(NUMBER_OF_CLUSTERS):
+# 
+#         input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
+#         avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
+#         output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
+# 
+#         result_data = run_mfps(
+#             input_path=input_path,
+#             avg_ratings_path=avg_ratings_path,
+#             output_path=output_path,
+#         )
+#         mfps_result.append(result_data)
+#     mfps_result = [line for row in mfps_result for line in row]
+# 
+#     output_path = f"./hadoop_output/mfps.txt"
+#     write_data_to_file(output_path, mfps_result)

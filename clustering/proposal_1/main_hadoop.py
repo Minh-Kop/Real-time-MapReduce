@@ -7,19 +7,19 @@ sys.path.append(os.path.abspath("./clustering/common"))
 
 from custom_util import run_mr_job_hadoop, env_dict
 from create_user_item_matrix import UserItemMatrix
+from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
+from kmeans import kmeans
+from update_centroids import UpdateCentroids
+from label import Label
 from .calculate_avg_rating import AvgRating
 from .create_importance import Importance
 from .get_max import GetMax
 from .create_centroid import CreateCentroid
 from .create_centroids_list import CreateCentroidsList
-from .calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from .calculate_M_nearest_points import MNearestPoints
 from .discard_nearest_points import DiscardNearestPoints
 from .calculate_scaling import Scaling
 from .calculate_sum_F_D import SumFD
-from .update_centroids import UpdateCentroids
-from .label import Label
-
 
 HADOOP_PATH = env_dict["hadoop_path"]
 
@@ -282,64 +282,7 @@ def run_clustering(input_file_path, number_of_clusters=3):
         print("Discard nearest points in F")
 
     # KMeans
-    count = 0
-    i = number_of_clusters - 1
-    while True:
-        print(f"\nLoop {count}")
-
-        # Calculate distance between users and centroids
-        run_mr_job_hadoop(
-            DistanceBetweenUsersCentroid,
-            [
-                f"{HADOOP_PATH}/clustering-output/full-matrix",
-                "--centroids-path",
-                f"{HADOOP_PATH}/input/centroids-{i}.txt",
-                "--return-centroid-id",
-                "True",
-            ],
-            f"{HADOOP_PATH}/clustering-output/full-matrix-{count}",
-        )
-        print("Calculate distance between users and centroids")
-
-        # Update centroids
-        updated_centroids = run_mr_job_hadoop(
-            UpdateCentroids,
-            [f"{HADOOP_PATH}/clustering-output/full-matrix-{count}"],
-            f"{HADOOP_PATH}/clustering-output/centroids-{i+1}",
-            True,
-        )
-        print("Update centroids")
-
-        # Check if has converged
-        updated_centroids_tuples = []
-        centroids_tuples = []
-        for line in updated_centroids:
-            _, value = line.strip().split("\t")
-            updated_centroids_tuples.append(tuple(value.strip().split("|")))
-        for line in centroids:
-            _, value = line.strip().split("\t")
-            centroids_tuples.append(tuple(value.strip().split("|")))
-
-        updated_centroids_tuples = tuple(updated_centroids_tuples)
-        centroids_tuples = tuple(centroids_tuples)
-        if set(updated_centroids_tuples) == set(centroids_tuples):
-            print("Converged\n")
-            break
-
-        centroids = updated_centroids
-        count += 1
-        i += 1
-
-    # Assign labels
-    run_mr_job_hadoop(
-        Label,
-        [f"{HADOOP_PATH}/clustering-output/full-matrix-{count}"],
-        f"{HADOOP_PATH}/clustering-output/labels",
-        True,
-    )
-    print("Assign labels")
-
-    return i
+    return kmeans(number_of_clusters - 1, "clustering-output", centroids)
 
 
 if __name__ == "__main__":
