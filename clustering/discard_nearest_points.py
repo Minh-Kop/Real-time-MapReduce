@@ -9,7 +9,9 @@ class DiscardNearestPoints(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def discard_nearest_points_mapper(self, _, line):
-        user, value = line.strip().split("\t")
+        val_line = line.strip().split('$')
+        if(len(val_line)==1):
+            user, value = line.strip().split("\t")
         yield f"{int(float(user))}", value
 
     def discard_nearest_points_reducer(self, user, values):
