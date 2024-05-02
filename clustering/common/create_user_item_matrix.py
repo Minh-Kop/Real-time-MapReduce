@@ -13,7 +13,13 @@ class UserItemMatrix(MRJob):
         key, value = line.strip().split("\t")
         key = key.strip().split(";")
         if len(key) == 1:
-            yield key[0], value
+            value = value.strip().split("|")
+            if len(value) == 1:
+                yield key[0], value[0]
+            else:
+                avg_rating, flag = value
+                if flag == "a":
+                    yield key[0], avg_rating
             return
         user, item = key
         rating = value.strip().split(";")[0]
@@ -28,7 +34,7 @@ class UserItemMatrix(MRJob):
         items = []
         with open(filename, "r") as file:
             for line in file:
-                item = line.strip()  # Remove leading/trailing whitespaces and newlines
+                item = line.strip().split("\t")[0]
                 items.append(float(item))
         return items
 

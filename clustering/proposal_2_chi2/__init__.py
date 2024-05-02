@@ -1,0 +1,1 @@
+from .main_hadoop import run_clustering_chi2 as run_clustering_proposal_2_chi2
