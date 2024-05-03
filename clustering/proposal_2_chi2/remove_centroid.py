@@ -14,8 +14,10 @@ class RemoveCentroid(MRJob):
         user, coord = line.strip().split('\t')
         if not (user == self.options.centroid):
             yield user, coord
-        if len(line.strip().split('-')) == 1:
+        elif len(line.strip().split('-')) == 1:
             yield user, f"{coord}-c"
+        else:
+            yield user, coord
 
     def reducer(self, user, coord):
         coord = list(coord)[0]
