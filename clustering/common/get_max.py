@@ -28,7 +28,7 @@ class GetMax(MRJob):
         users_values = [line.strip().split(";") for line in users_values]
         users_values = np.array(users_values)
 
-        values = users_values[:, 1]
+        values = users_values[:, 1].astype(float)
 
         max_idx = np.argmax(values)
         return users_values[max_idx]
