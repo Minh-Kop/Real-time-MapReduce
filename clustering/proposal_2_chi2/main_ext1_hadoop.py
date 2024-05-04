@@ -164,16 +164,6 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
         )
         print("Calculate distance between centroids")
 
-        with open('hadoop_output/centroids.txt','r') as file:
-            print("centroids:")
-            for line in file:
-                print(line)
-
-        with open('hadoop_output/new-centroids.txt','r') as file:
-            print("new centroids:")
-            for line in file:
-                print(line)
-
         # Get highest centroid
         run_mr_job_hadoop(
             GetMax,
@@ -211,8 +201,3 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
             True,
         )
         print("Remove highest centroid")
-        
-        with open('hadoop_output/new-centroids.txt','r') as file:
-            print("new centroids:")
-            for line in file:
-                print(line)
