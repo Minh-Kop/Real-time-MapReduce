@@ -6,12 +6,12 @@ from calculate_chi2 import ChiSquare
 import pandas as pd
 
 # Define the file paths
-file_A = "./selectKBest-chi2/output/chi2.txt"
+file_A = "./clustering/proposal_2_chi2/output/chi2.txt"
 file_B = "./input/user_item_matrix copy.txt"
 
 # Define k
 k = 3  # Number of highest values to select
-noITem = '7'
+noItem = '7'
 
 def run_mr_job(mr_job_class, input_args):
     mr_job = mr_job_class(args=input_args)
@@ -30,35 +30,35 @@ def write_data_to_file(filename, data, mode="w"):
     output_file.close()
 
 result_data = run_mr_job(AvgAndSum, ["./input/input_file_copy.txt", "--n", noItem])
-write_data_to_file("./selectKBest-chi2/output/avg_sum.txt", result_data)
+write_data_to_file("./clustering/proposal_2_chi2/output/avg_sum.txt", result_data)
 
-result_data = run_mr_job(ClassProbability, ["./input/items copy.txt", "--n", noItem])
-write_data_to_file("./selectKBest-chi2/output/class_probability.txt", result_data)
+result_data = run_mr_job(ClassProbability, ["./input/items_copy.txt", "--n", noItem])
+write_data_to_file("./clustering/proposal_2_chi2/output/class_probability.txt", result_data)
 
 result_data = run_mr_job(
     ObservedValue,
-    ["./input/items copy.txt", "./input/user_item_matrix copy.txt"],
+    ["./input/items_copy.txt", "./input/user_item_matrix copy.txt"],
 )
-write_data_to_file("./selectKBest-chi2/output/O.txt", result_data)
+write_data_to_file("./clustering/proposal_2_chi2/output/O.txt", result_data)
 
 result_data = run_mr_job(
     ExpectedValue,
     [
-        "./selectKBest-chi2/output/avg_sum.txt",
-        "--cProb",
-        "./selectKBest-chi2/output/class_probability.txt",
+        "./clustering/proposal_2_chi2/output/avg_sum.txt",
+        "--class-probability-path",
+        "./clustering/proposal_2_chi2/output/class_probability.txt",
     ],
 )
-write_data_to_file("./selectKBest-chi2/output/E.txt", result_data)
+write_data_to_file("./clustering/proposal_2_chi2/output/E.txt", result_data)
 
 result_data = run_mr_job(
     ChiSquare,
     [
-        "./selectKBest-chi2/output/E.txt",
-        "./selectKBest-chi2/output/O.txt",
+        "./clustering/proposal_2_chi2/output/E.txt",
+        "./clustering/proposal_2_chi2/output/O.txt",
     ],
 )
-write_data_to_file("./selectKBest-chi2/output/chi2.txt", result_data)
+write_data_to_file("./clustering/proposal_2_chi2/output/chi2.txt", result_data)
 
 
 
@@ -81,7 +81,7 @@ sorted_merged_df = merged_df.sort_values(by="value_x", ascending=False).head(k)
 corresponding_values = sorted_merged_df[["key", "value_y"]].values.tolist()
 
 # Write new centroids to file
-with open('selectKBest-chi2/output/centroids.txt','w') as file:
+with open('./clustering/proposal_2_chi2/output/centroids.txt','w') as file:
     for i in corresponding_values:
         file.writelines(f"{i[0]}\t{i[1]}\n")
         i[1] = [float(coor.strip().split(';')[1] )for coor in (i[1].strip().split('|'))]

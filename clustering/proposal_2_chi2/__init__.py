@@ -1,1 +1,2 @@
 from .main_hadoop import run_clustering_chi2 as run_clustering_proposal_2_chi2
+from .main_ext1_hadoop import run_clustering_chi2_ext1 as run_clustering_proposal_2_chi2_ext1

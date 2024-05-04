@@ -13,10 +13,12 @@ from custom_util import (
 )
 from clustering import run_proposal_1_clustering
 from mfps.main_hadoop import run_mfps
-
+from clustering import run_clustering_proposal_2_chi2_ext1
+from clustering import run_clustering_proposal_2_chi2
 
 HADOOP_PATH = env_dict["hadoop_path"]
-NUMBER_OF_CLUSTERS = 3
+NUMBER_OF_CLUSTERS = 2
+MULTIPLIER = 1
 
 
 def create_input_file(input_path, output_path):
@@ -106,7 +108,8 @@ if __name__ == "__main__":
     # create_users_items_file(input_file_path)
 
     # Clustering
-    num = run_proposal_1_clustering(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
+    # num = run_clustering_proposal_2_chi2(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
+    num = run_clustering_proposal_2_chi2_ext1(hdfs_input_file_path, NUMBER_OF_CLUSTERS, MULTIPLIER)
 
 #     # Split input file
 #     split_files_by_label(input_file_path, num=num)

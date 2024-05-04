@@ -14,17 +14,10 @@ def split_test_train(source_path, train_path, test_path, ratio=0.8):
     with open(source_path, 'r') as src_file, open(test_path, "a") as test_file, open(train_path, "a") as train_file:
         lines = src_file.readlines()
         ratio_index = int(len(lines) * ratio)
+        train_file.writelines(lines[:ratio_index])
+        test_file.writelines(lines[ratio_index:])
 
-        for line in lines[:ratio_index]:
-            elements = line.strip().split("\t")
-            train_file.write(f"{elements[0]};{elements[1]}\t{elements[2]};{elements[3]}\n")
-
-        for line in lines[ratio_index:]:
-            elements = line.strip().split("\t")
-            test_file.write(f"{elements[0]};{elements[1]}\t{elements[2]};{elements[3]}\n")
-
-
-def evaluate(N, sim_path, train_path, test_path, avg_path):
+def evaluate(sim_path, train_path, test_path, avg_path):
     # Read data from files
     train_df = pd.read_csv(train_path, delimiter='\t', names=['user_item', 'rating_time'])
     test_df = pd.read_csv(test_path, delimiter='\t', names=['user_item', 'rating_time'])
@@ -86,17 +79,3 @@ def evaluate(N, sim_path, train_path, test_path, avg_path):
     res = dif/N
 
     return math.sqrt(res.sum())
-
-
-source_file_path = "./input/u.data"
-train_file_path = "./input/train_input.txt"
-test_file_path = "./input/test_input.txt"
-sim_path = "./output/mfps.txt"
-avg_file_path = "./input/avg_ratings copy.txt"
-ratio = 0.8
-N = 10
-
-# split file
-# split_test_train(source_file_path, train_file_path, test_file_path, ratio)
-RMSE = evaluate(N, sim_path, train_file_path, test_file_path, avg_file_path)
-print(RMSE)

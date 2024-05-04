@@ -13,7 +13,7 @@ from update_centroids import UpdateCentroids
 from label import Label
 from .calculate_avg_rating import AvgRating
 from .create_importance import Importance
-from .get_max import GetMax
+from get_max import GetMax
 from .create_centroid import CreateCentroid
 from .create_centroids_list import CreateCentroidsList
 from .calculate_M_nearest_points import MNearestPoints
