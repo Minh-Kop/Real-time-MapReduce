@@ -25,3 +25,6 @@ class CurrentCentroid(MRJob):
                 reducer=self.reducer,
             ),
         ]
+
+if __name__ == "__main__":
+    CurrentCentroid.run()

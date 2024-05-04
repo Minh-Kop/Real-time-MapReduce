@@ -37,3 +37,6 @@ class DisatanceBetweenCentroids(MRJob):
                 reducer=self.reducer,
             ),
         ]
+
+if __name__ == "__main__":
+    DisatanceBetweenCentroids.run()

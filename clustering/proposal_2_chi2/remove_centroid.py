@@ -30,3 +30,6 @@ class RemoveCentroid(MRJob):
                 reducer=self.reducer,
             ),
         ]
+
+if __name__ == "__main__":
+    RemoveCentroid.run()

@@ -22,7 +22,7 @@ from .get_current_centroid import CurrentCentroid
 HADOOP_PATH = env_dict["hadoop_path"]
 
 
-def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
+def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
     # Number of items
     items_file = open(f"input/items_copy.txt", "r")
     for number_of_items, _ in enumerate(items_file, start=1):
@@ -121,7 +121,7 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
     centroids_df = centroids_df.drop(columns=["chi2_value"])
     
     # Retrieve corresponding values from sorted_merged_df
-    corresponding_values = centroids_df[["key", "value_y"]].values.tolist()
+    corresponding_values = centroids_df[["key", "matrix_value"]].values.tolist()
 
     # Select first centroid
     curr_user = str(corresponding_values[0][0])
@@ -133,6 +133,8 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
             file.writelines(f"{i[0]}\t{i[1]}\n")
             i[1] = [float(coor.strip().split(';')[1] )for coor in (i[1].strip().split('|'))]
 
+    print(curr_user, curr_coor)
+
     # Remove current centroid
     run_mr_job_hadoop(
         RemoveCentroid,
@@ -141,7 +143,7 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
             "--centroid",
             curr_user,
         ],
-        f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+        f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
         True,
     )
     print("Remove centroid")
@@ -153,7 +155,7 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
         run_mr_job_hadoop(
             DisatanceBetweenCentroids,
             [
-                "hadoop_output/centroids.txt",
+                f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
                 "--centroid-coord",
                 curr_coor,
             ],
@@ -161,6 +163,16 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
             True,
         )
         print("Calculate distance between centroids")
+
+        with open('hadoop_output/centroids.txt','r') as file:
+            print("centroids:")
+            for line in file:
+                print(line)
+
+        with open('hadoop_output/new-centroids.txt','r') as file:
+            print("new centroids:")
+            for line in file:
+                print(line)
 
         # Get highest centroid
         run_mr_job_hadoop(
@@ -183,7 +195,7 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
         )
         print("Get highest centroid")
 
-        with open("hadoop-output/highest-centroids.txt", 'r') as file:
+        with open("hadoop_output/highest-centroids.txt", 'r') as file:
             for line in file:
                 curr_user, curr_coor = line.strip().split('\t')
 
@@ -195,7 +207,12 @@ def run_clustering_chi2(input_file_path, noCluster=2, noMutiply=1):
                 "--centroid",
                 curr_user,
             ],
-            f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+            f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
             True,
         )
         print("Remove highest centroid")
+        
+        with open('hadoop_output/new-centroids.txt','r') as file:
+            print("new centroids:")
+            for line in file:
+                print(line)

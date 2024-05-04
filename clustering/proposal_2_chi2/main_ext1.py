@@ -71,11 +71,8 @@ data_A_df = pd.read_csv(file_A, sep="\t", header=None, names=["key", "value"])
 # Read data from file B into a pandas DataFrame
 data_B_df = pd.read_csv(file_B, sep="\t", header=None, names=["key", "value"])
 
-# Convert 'key' column to integer type
-data_B_df["key"] = data_B_df["key"].astype(int)
-
 # Merge data_A_df and data_B_df on 'key'
-merged_df = pd.merge(data_A_df, data_B_df, on="key", how="inner")
+merged_df = pd.merge(data_A_df, data_B_df, on="key")
 
 # Sort merged DataFrame based on 'value_x' and select the top k elements
 sorted_merged_df = merged_df.sort_values(by="value_x", ascending=False).head(k*a)
