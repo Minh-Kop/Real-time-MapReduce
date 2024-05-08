@@ -1,5 +1,3 @@
-# import sys
-
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
@@ -80,12 +78,4 @@ class UserItemMatrix(MRJob):
 
 
 if __name__ == "__main__":
-    # sys.argv[1:] = [
-    #     "./input/input_file_copy.txt",
-    #     "./clustering/output/avg_ratings.txt",
-    #     "--items-path",
-    #     "./input/items.txt",
-    #     "-r",
-    #     "hadoop",
-    # ]
     UserItemMatrix().run()

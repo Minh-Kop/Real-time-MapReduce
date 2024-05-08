@@ -7,8 +7,9 @@ import numpy as np
 sys.path.append(os.path.abspath("./util"))
 sys.path.append(os.path.abspath("./clustering/common"))
 
-from custom_util import env_dict, run_mr_job_hadoop
+from custom_util import env_dict, run_mr_job_hadoop, put_files_to_hdfs
 from create_user_item_matrix import UserItemMatrix
+from kmeans import kmeans
 from .calculate_avg_and_sum import AvgAndSum
 from .calculate_class_probability import ClassProbability
 from .calculate_expected_value import ExpectedValue
@@ -116,4 +117,23 @@ def run_clustering_chi2(input_file_path, noCluster=3):
         noCluster
     )
     centroids_df = centroids_df.drop(columns=["chi2_value"])
-    print(centroids_df)
+    centroids_df.to_csv(
+        "clustering/proposal_2_chi2/output/centroids-0.txt",
+        sep="\t",
+        index=False,
+        header=False,
+    )
+    put_files_to_hdfs(
+        "clustering/proposal_2_chi2/output/centroids-0.txt",
+        "/user/mackop/input/centroids-0.txt",
+    )
+
+    centroids = (
+        centroids_df["key"].astype(str)
+        + "\t"
+        + centroids_df["matrix_value"].astype(str)
+        + "\n"
+    )
+    centroids = centroids.values.tolist()
+
+    return kmeans(0, "clustering-chi2-output", centroids)
