@@ -150,8 +150,8 @@ if __name__ == "__main__":
 
     # split file
     # split_test_train(source_file_path, train_file_path, test_file_path, ratio)
-    RMSE = evaluate(sim_path, train_file_path, test_file_path, avg_file_path)
-    print(RMSE)
+    RMSE, F1 = evaluate(sim_path, train_file_path, test_file_path, avg_file_path)
+    print(RMSE, F1)
 
     # MFPS
     # mfps_result = []

@@ -75,7 +75,19 @@ def evaluate(sim_path, train_path, test_path, avg_path):
     val_df.to_csv('./output/pre_obs_val', sep=',', index=False)
 
     dif = (val_df['rating'].astype(float) - val_df['pre_rating'].astype(float))**2
-    N = len(val_df)
-    res = dif/N
+    rmse = math.sqrt((dif/len(val_df)).sum())
 
-    return math.sqrt(res.sum())
+    val_df = pd.merge(val_df, avg_df, on='user').astype(float)
+
+    tp_df = val_df[val_df['pre_rating'] > val_df['avg']].astype(float).drop('rating', axis=1)
+    tp_df = pd.merge(tp_df, test_df.astype(float), on=['user', 'item'])
+
+    tp = len(tp_df[tp_df['rating'] > tp_df['avg']])
+    test_df = pd.merge(test_df, avg_df, on='user')
+
+    precision = tp/len(val_df[val_df['pre_rating'] > val_df['avg']])
+    recall = tp/len(test_df[test_df['rating'].astype(float) > test_df['avg']])
+
+    f1 = 2*(precision*recall)/(precision + recall)
+
+    return rmse, f1
