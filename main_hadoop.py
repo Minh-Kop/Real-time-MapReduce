@@ -49,7 +49,7 @@ def create_users_items_file(input_path):
     users.to_csv("./input/users.txt", index=False, header=False)
     items.to_csv("./input/items.txt", index=False, header=False)
 
-    put_files_to_hdfs("./input/items.txt", "/user/mackop/input/items.txt")
+    put_files_to_hdfs("./input/items.txt", "input/items.txt")
 
 
 def split_files_by_label(input_file_path, num):
@@ -88,13 +88,13 @@ def split_files_by_label(input_file_path, num):
         input_file_i = joined_df.loc[[centroid]]
         input_file_i_path = f"input/input-file-{index}.txt"
         input_file_i.to_csv(input_file_i_path, sep="\t", index=False, header=False)
-        put_files_to_hdfs(input_file_i_path, f"/user/mackop/{input_file_i_path}")
+        put_files_to_hdfs(input_file_i_path, f"{input_file_i_path}")
 
         # Export average ratings
         avg_ratings_i = avg_ratings.loc[[centroid]]
         avg_ratings_i_path = f"input/avg-ratings-{index}.txt"
         avg_ratings_i.to_csv(avg_ratings_i_path, sep="\t", index=False, header=False)
-        put_files_to_hdfs(avg_ratings_i_path, f"/user/mackop/{avg_ratings_i_path}")
+        put_files_to_hdfs(avg_ratings_i_path, f"{avg_ratings_i_path}")
 
 
 if __name__ == "__main__":

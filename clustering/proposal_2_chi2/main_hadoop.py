@@ -125,7 +125,7 @@ def run_clustering_chi2(input_file_path, noCluster=3):
     )
     put_files_to_hdfs(
         "clustering/proposal_2_chi2/output/centroids-0.txt",
-        "/user/mackop/input/centroids-0.txt",
+        "input/centroids-0.txt",
     )
 
     centroids = (
