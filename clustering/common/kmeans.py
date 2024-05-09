@@ -7,9 +7,6 @@ from custom_util import run_mr_job_hadoop, env_dict
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from update_centroids import UpdateCentroids
 from label import Label
-# from .calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
-# from .update_centroids import UpdateCentroids
-# from .label import Label
 
 HADOOP_PATH = env_dict["hadoop_path"]
 

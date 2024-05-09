@@ -9,11 +9,9 @@ from custom_util import run_mr_job_hadoop, env_dict
 from create_user_item_matrix import UserItemMatrix
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from kmeans import kmeans
-from update_centroids import UpdateCentroids
-from label import Label
+from get_max import GetMax
 from .calculate_avg_rating import AvgRating
 from .create_importance import Importance
-from get_max import GetMax
 from .create_centroid import CreateCentroid
 from .create_centroids_list import CreateCentroidsList
 from .calculate_M_nearest_points import MNearestPoints
