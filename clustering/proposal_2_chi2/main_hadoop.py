@@ -68,6 +68,7 @@ def run_clustering_chi2(input_file_path, noCluster=3):
             f"{HADOOP_PATH}/input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
+        True
     )
     print("Calculate expected value")
 
@@ -79,6 +80,7 @@ def run_clustering_chi2(input_file_path, noCluster=3):
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
+        True
     )
     print("Calculate observed value")
 
