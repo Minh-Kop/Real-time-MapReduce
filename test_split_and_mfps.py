@@ -53,5 +53,5 @@ if __name__ == "__main__":
 
     #     print("time: " + str(end_mr - start_mr))
 
-    hdfs_input_file_path = f"{HADOOP_PATH}/input/input_file_copy.txt"
+    hdfs_input_file_path = f"{HADOOP_PATH}/input/input_file_test.txt"
     run_clustering_proposal_2_chi2(hdfs_input_file_path)
