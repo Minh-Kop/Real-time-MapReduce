@@ -16,7 +16,7 @@ class ObservedValue(MRJob):
             values = values.strip().split("|")
             for val in values:
                 item, rating = val.strip().split(";")
-                yield str(int(float(item))), f"{user};{rating}"
+                yield item, f"{user};{rating}"
 
     def add_label_to_user_reducer(self, item, values):
         values = list(values)
