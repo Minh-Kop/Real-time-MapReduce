@@ -17,7 +17,7 @@ def split_test_train(source_path, train_path, test_path, ratio=0.8):
         train_file.writelines(lines[:ratio_index])
         test_file.writelines(lines[ratio_index:])
 
-def evaluate(sim_path, train_path, test_path, avg_path):
+def evaluate(sim_path, train_path, test_path, avg_path, k):
     # Read data from files
     train_df = pd.read_csv(train_path, delimiter='\t', names=['user_item', 'rating_time'])
     test_df = pd.read_csv(test_path, delimiter='\t', names=['user_item', 'rating_time'])
@@ -51,7 +51,7 @@ def evaluate(sim_path, train_path, test_path, avg_path):
     val_df = pd.DataFrame(columns=['user','item','pre_rating'])
 
     # Iterate over user_item_list
-    for _, row in user_item_list.iterrows():
+    for index, row in user_item_list.iterrows():
         u_user = row['user']
         items = row['item']
         avg = row['avg']
@@ -60,16 +60,26 @@ def evaluate(sim_path, train_path, test_path, avg_path):
 
         # Calculate similarities between the current user and all other users who have rated the items
         user_ratings.loc[:, 'similarity'] = user_ratings['user'].map(lambda v_user: sim_dict.get((u_user, v_user)))
+        user_ratings['similarity'] = user_ratings['similarity'].astype(float)
+
+        # Get the top k similar users
+        top_k_similar_users = user_ratings.nlargest(k, 'similarity')
 
         # Calculate the weighted sum of ratings and similarities
         user_ratings.loc[:, 'weighted_sum'] = (user_ratings['rating'].astype(float) - user_ratings['avg'].astype(float)) * user_ratings['similarity'].astype(float)
+        top_k_similar_users.loc[:, 'weighted_sum'] = (top_k_similar_users['rating'].astype(float) - top_k_similar_users['avg'].astype(float)) * top_k_similar_users['similarity'].astype(float)
 
         # Sum of similarities for normalization
         sum_df = user_ratings.groupby('item').agg({'similarity':'sum', 'weighted_sum':'sum'}).reset_index()
         sum_df['pre_rating'] = (avg + (sum_df['weighted_sum']/sum_df['similarity']))
         sum_df['user'] = u_user
+
+        sum_df_top_k = top_k_similar_users.groupby('item').agg({'similarity':'sum', 'weighted_sum':'sum'}).reset_index()
+        sum_df_top_k['pre_rating'] = (avg + (sum_df_top_k['weighted_sum']/sum_df_top_k['similarity']))
+        sum_df_top_k['user'] = u_user
         
         val_df = pd.concat([val_df, sum_df]).drop(['similarity','weighted_sum'], axis=1)
+        val_df_top_k = pd.concat([val_df, sum_df]).drop(['similarity','weighted_sum'], axis=1)
     
     val_df = pd.merge(val_df, test_df, on=['user','item'], how='left')
     val_df.to_csv('./output/pre_obs_val', sep=',', index=False)
