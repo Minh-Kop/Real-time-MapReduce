@@ -139,10 +139,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
                 ]
             ).reset_index(drop=True)
 
-        # predict_df = predict_df[predict_df["predict_rating"] > user_1_avg_rating]
-        # predict_df = predict_df.sort_values(by="predict_rating", ascending=False)[
-        #     :number_of_recommend_items
-        # ]
+        # Create accurate recommendation
         recommend_item_df = predict_df[
             predict_df["predict_rating"] > user_1_avg_rating
         ].sort_values(by="predict_rating", ascending=False, ignore_index=True)[
@@ -150,9 +147,6 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
         ][
             ["item"]
         ]
-
-        if len(recommend_item_df) < number_of_recommend_items:
-            continue
 
         # Create truth set with only items with ratings > avg rating
         test_user_df = test_df.loc[
@@ -164,7 +158,8 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
             test_user_df,
             on="item",
         )
-        number_of_correct_predict_items = len(merge_df)
+        number_of_correct_predict_items = len(merge_df.index)
+        # number_of_correct_predict_items = len(recommend_item_df.index)
         number_of_truth_set_items = len(test_user_df.index)
 
         result_df = pd.concat(
@@ -203,6 +198,9 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
     recall = number_of_correct_predict_items / number_of_truth_set_items
     f1_score = 2 * precision * recall / (precision + recall)
 
+    result_df.to_csv("t.txt", index=None)
+    print(f"Precision: {precision}")
+
     return rmse, f1_score
 
 
@@ -218,5 +216,5 @@ if __name__ == "__main__":
     sim_path = "./hadoop_output/mfps.txt"
     avg_file_path = "./input/avg-file.txt"
 
-    RMSE, F1 = evaluate(10, 4, sim_path, train_file_path, test_file_path, avg_file_path)
+    RMSE, F1 = evaluate(10, 7, sim_path, train_file_path, test_file_path, avg_file_path)
     print(f"RMSE: {RMSE}\nF1-score: {F1}")
