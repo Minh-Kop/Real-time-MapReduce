@@ -49,9 +49,9 @@ def create_users_items_file(input_path):
 
     # Export to csv
     users.to_csv("./input/users.txt", index=False, header=False)
-    #items.to_csv("./input/items.txt", index=False, header=False)
+    # items.to_csv("./input/items.txt", index=False, header=False)
 
-    put_files_to_hdfs("./input/items.txt", "/user/mackop/input/items.txt")
+    put_files_to_hdfs("./input/items.txt", "input/items.txt")
 
 
 def split_files_by_label(input_file_path, num):
@@ -91,26 +91,27 @@ def split_files_by_label(input_file_path, num):
         input_file_i = joined_df.loc[[centroid]]
         input_file_i_path = f"input/input-file-{index}.txt"
         input_file_i.to_csv(input_file_i_path, sep="\t", index=False, header=False)
-        put_files_to_hdfs(input_file_i_path, f"/user/mackop/{input_file_i_path}")
+        put_files_to_hdfs(input_file_i_path, f"{input_file_i_path}")
 
         # Export average ratings
         avg_ratings_i = avg_ratings.loc[[centroid]]
         avg_ratings_i_path = f"input/avg-ratings-{index}.txt"
         avg_ratings_i.to_csv(avg_ratings_i_path, sep="\t", index=False, header=False)
-        put_files_to_hdfs(avg_ratings_i_path, f"/user/mackop/{avg_ratings_i_path}")
+        put_files_to_hdfs(avg_ratings_i_path, f"{avg_ratings_i_path}")
 
 
 def create_item_file(item_path):
-    item_df = pd.read_csv(item_path, sep='|', names=[str(i) for i in range(24)])
+    item_df = pd.read_csv(item_path, sep="|", names=[str(i) for i in range(24)])
     item_df = item_df.astype(str)
-    item_df['genre'] = item_df[[str(i) for i in range(5, 24)]].agg('|'.join, axis=1)
+    item_df["genre"] = item_df[[str(i) for i in range(5, 24)]].agg("|".join, axis=1)
     item_df = item_df.drop([str(i) for i in range(1, 24)], axis=1)
 
-    item_df.to_csv('./input/items.txt', sep='\t', index=False, header=False)
+    item_df.to_csv("./input/items.txt", sep="\t", index=False, header=False)
+
 
 if __name__ == "__main__":
     source_file_path = "./input/u.data"
-    item_file_path = './input/u.item'
+    item_file_path = "./input/u.item"
     all_user_path = "./input/input_file_copy.txt"
     test_file_path = "./input/test_input.txt"
     train_file_path = "./input/train_input.txt"
@@ -146,16 +147,13 @@ if __name__ == "__main__":
     avg_file_path = "./input/avg-file.txt"
     # # ratio = 0.8
 
-
-
     # split file
     # split_test_train(source_file_path, train_file_path, test_file_path, ratio)
-    RMSE, F1 = evaluate(sim_path, train_file_path, test_file_path, avg_file_path)
+    RMSE, F1 = evaluate(10, 4, sim_path, train_file_path, test_file_path, avg_file_path)
     print(RMSE, F1)
 
     # MFPS
     # mfps_result = []
-
 
     # input_path = f"{HADOOP_PATH}/input/train_input.txt"
     # avg_ratings_path = f"{HADOOP_PATH}/input/avg-file.txt"

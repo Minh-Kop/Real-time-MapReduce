@@ -19,15 +19,5 @@ class Scaling(MRJob):
         yield user, str(value_scale)
 
 
-# import sys
-
 if __name__ == "__main__":
-    # i = 0
-    # sys.argv[1:] = [
-    #     "-r",
-    #     "hadoop",
-    #     f"hdfs://localhost:9000/user/mackop/clustering-output/F-{i}",
-    #     "--max-value",
-    #     str(float(6)),
-    # ]
     Scaling().run()

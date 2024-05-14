@@ -1,0 +1,5 @@
+{
+    "conventionalCommits.scopes": [
+        "add check __name__ block code to run with terminal in eval_function.py"
+    ]
+}
