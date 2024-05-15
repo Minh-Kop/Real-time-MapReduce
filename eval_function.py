@@ -204,7 +204,11 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
     return rmse, f1_score
 
 
+import mfps.main as main
+
 if __name__ == "__main__":
+    main.run_mfps("input/input_file.txt", "input/avg-file.txt", "./hadoop_output/mfps.txt")
+
     source_file_path = "./input/u.data"
     item_file_path = "./input/u.item"
     all_user_path = "./input/input_file_copy.txt"

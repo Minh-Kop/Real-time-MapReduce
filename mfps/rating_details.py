@@ -1,7 +1,6 @@
 # import sys
 
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 import pandas as pd
 
@@ -13,58 +12,42 @@ class RatingDetails(MRJob):
         super(RatingDetails, self).configure_args()
         self.add_file_arg("--avg-rating-path", help="Path to average rating file")
 
-    def rating_details_mapper(self, _, line):
+    def mapper(self, _, line):
         key, value = line.strip().split("\t")
-        keys = key.strip().split(";")
+        ratings = value.strip().split("|")[0]
+        yield key, ratings
 
-        for index, _ in enumerate(keys):
-            yield f"{keys[index]};{keys[1 - index]}", value
-
-    def create_avg_rating_df(self, filename):
-        df = pd.read_csv(
-            filename, sep="\t", names=["user", "avg_rating"], dtype="float64"
-        )
-        df.set_index("user", inplace=True)
-        return df
-
-    def rating_details_reducer_init(self):
+    def reducer_init(self):
         avg_rating_path = self.options.avg_rating_path
-        self.avg_rating_df = self.create_avg_rating_df(avg_rating_path)
+        self.avg_rating_df = pd.read_csv(
+            avg_rating_path, sep="\t", names=["user", "avg_rating"], index_col=0
+        )
 
-    def rating_details_reducer(self, users, values):
+    def reducer(self, users, values):
+        user_1, user_2 = users.strip().split(";")
         avg_rating_df = self.avg_rating_df
-        user1, user2 = users.strip().split(";")
-        threshold1 = float(avg_rating_df.loc[float(user1), "avg_rating"])
-        threshold2 = float(avg_rating_df.loc[float(user2), "avg_rating"])
+        threshold_1 = avg_rating_df.loc[int(float(user_1)), "avg_rating"]
+        threshold_2 = avg_rating_df.loc[int(float(user_2)), "avg_rating"]
 
         count = 0
-        for value in values:
-            ratings, _ = value.strip().split("|")
-            rating1, rating2 = ratings.strip().split(";")
-            rating1 = float(rating1)
-            rating2 = float(rating2)
+        for ratings in values:
+            rating_1, rating_2 = ratings.strip().split(";")
+            rating_1 = float(rating_1)
+            rating_2 = float(rating_2)
 
-            if (rating1 < threshold1 and rating2 < threshold2) or (
-                rating1 > threshold1 and rating2 > threshold2
+            if (rating_1 < threshold_1 and rating_2 < threshold_2) or (
+                rating_1 > threshold_1 and rating_2 > threshold_2
             ):
                 count = count + 1
 
-        yield users, f"{count};rd"
-
-    def steps(self):
-        return [
-            MRStep(
-                mapper=self.rating_details_mapper,
-                reducer_init=self.rating_details_reducer_init,
-                reducer=self.rating_details_reducer,
-            )
-        ]
+        yield f"{user_1};{user_2}", f"{count};rd"
+        yield f"{user_2};{user_1}", f"{count};rd"
 
 
 if __name__ == "__main__":
     # sys.argv[1:] = [
-    #     "--combinations-path",
-    #     "./create_combinations.txt",
-    #     "./rating_usefulness.txt",
+    #     "mfps/output/create_combinations.txt",
+    #     "--avg-rating-path",
+    #     "mfps/output/avg_ratings.txt",
     # ]
     RatingDetails().run()
