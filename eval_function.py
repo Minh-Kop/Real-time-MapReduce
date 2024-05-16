@@ -59,10 +59,10 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
     training_df = pd.merge(training_df, avg_rating_df, on="user")
 
     # Create a test users set with each record stores an user's item list
-    test_users_df = test_df.groupby("user")["item"].agg(list).reset_index()
+    test_users_df = test_df.groupby("user")["item"].agg(list)
     test_users_df = pd.merge(test_users_df, avg_rating_df, on="user")
 
-    # Create a dataFrame to save RMSE, F1 score
+    # Create a dataFrame to store components to calculate RMSE, F1 score
     result_df = pd.DataFrame(
         columns=[
             "user",
@@ -84,6 +84,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
         if len(items) < number_of_recommend_items:
             continue
 
+        # Create a dataFrame to store predict ratings and their errors with real ratings
         predict_df = pd.DataFrame(columns=["item", "rating", "predict_rating", "rmse"])
 
         for item in items:
@@ -95,7 +96,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
                 sorted_users_df.index.isin(filtered_training_df["user"])
             ][:k]
 
-            # Check if the number of top neighbors are enough to use for predict
+            # Check if the number of top neighbors are enough to use for prediction
             if len(top_k_users_df) < k:
                 continue
 
@@ -124,7 +125,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
             ].values[0]
             predict_df = pd.concat(
                 [
-                    predict_df,
+                    predict_df if not predict_df.empty else None,
                     pd.DataFrame(
                         [
                             [
@@ -164,7 +165,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
 
         result_df = pd.concat(
             [
-                result_df,
+                result_df if not result_df.empty else None,
                 pd.DataFrame(
                     [
                         [
@@ -199,7 +200,7 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
     f1_score = 2 * precision * recall / (precision + recall)
 
     result_df.to_csv("t.txt", index=None)
-    print(f"Precision: {precision}")
+    print(f"Precision: {precision}\nRMSE: {rmse}\nF1-score: {f1_score}")
 
     return rmse, f1_score
 
@@ -207,7 +208,9 @@ def evaluate(k, number_of_recommend_items, sim_path, train_path, test_path, avg_
 import mfps.main as main
 
 if __name__ == "__main__":
-    main.run_mfps("input/input_file.txt", "input/avg-file.txt", "./hadoop_output/mfps.txt")
+    # main.run_mfps(
+    #     "input/input_file.txt", "input/avg-file.txt", "./hadoop_output/mfps.txt"
+    # )
 
     source_file_path = "./input/u.data"
     item_file_path = "./input/u.item"
@@ -221,4 +224,3 @@ if __name__ == "__main__":
     avg_file_path = "./input/avg-file.txt"
 
     RMSE, F1 = evaluate(10, 7, sim_path, train_file_path, test_file_path, avg_file_path)
-    print(f"RMSE: {RMSE}\nF1-score: {F1}")
