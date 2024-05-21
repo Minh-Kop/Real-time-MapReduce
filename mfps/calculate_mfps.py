@@ -1,6 +1,4 @@
-# import sys
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
@@ -8,7 +6,7 @@ class MFPS(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
     INTERNAL_PROTOCOL = TextProtocol
 
-    def mfps_mapper(self, _, line):
+    def mapper(self, _, line):
         key, value = line.strip().split("\t")
         u1, u2 = key.strip().split(";")
 
@@ -16,7 +14,7 @@ class MFPS(MRJob):
             yield f"{u2};{u1}", value
         yield key, value
 
-    def mfps_reducer(self, key, values):
+    def reducer(self, key, values):
         values = list(values)
         values = [value.strip().split(";") for value in values]
         mfps = 1
@@ -28,6 +26,8 @@ class MFPS(MRJob):
                 if flag == "rc":
                     mfps = 0
                     break
+                elif flag == "rd":
+                    mfps += 1.1
                 continue
             mfps += 1 / sim
         if mfps:
@@ -35,17 +35,6 @@ class MFPS(MRJob):
 
         yield key, f"{mfps}"
 
-    def steps(self):
-        return [
-            MRStep(mapper=self.mfps_mapper, reducer=self.mfps_reducer),
-        ]
-
 
 if __name__ == "__main__":
-    # sys.argv[1:] = [
-    #     './rating_commodity.txt',
-    #     './rating_usefulness.txt',
-    #     './rating_details.txt',
-    #     './rating_time.txt',
-    # ]
     MFPS().run()

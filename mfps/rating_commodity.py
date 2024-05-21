@@ -1,7 +1,4 @@
-# import sys
-
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 
 
@@ -20,41 +17,27 @@ class RatingCommodity(MRJob):
                 user_ids.append(int(user_id))
         return user_ids
 
-    def rating_commodity_mapper_init(self):
+    def mapper_init(self):
         users_path = self.options.users_path
         self.users = self.create_user_list(users_path)
 
-    def rating_commodity_mapper(self, _, line):
-        currentUser, item = (line.strip().split("\t"))[0].strip().split(";")
-        currentUser = int(currentUser)
+    def mapper(self, _, line):
+        current_user, item = (line.strip().split("\t"))[0].strip().split(";")
+        current_user = int(current_user)
 
         for user in self.users:
-            if user < currentUser:
-                yield f"{user};{currentUser}", item
-            elif user > currentUser:
-                yield f"{currentUser};{user}", item
+            if user < current_user:
+                yield f"{user};{current_user}", item
+            elif user > current_user:
+                yield f"{current_user};{user}", item
 
-    def rating_commodity_reducer(self, users, items):
+    def reducer(self, users, items):
         user1, user2 = users.strip().split(";")
         items = list(items)
-        uniqueItems = set(items)
+        unique_items = set(items)
 
-        yield f"{user1};{user2}", f"{len(items) - len(uniqueItems)};rc"
-
-    def steps(self):
-        return [
-            MRStep(
-                mapper_init=self.rating_commodity_mapper_init,
-                mapper=self.rating_commodity_mapper,
-                reducer=self.rating_commodity_reducer,
-            )
-        ]
+        yield f"{user1};{user2}", f"{len(items) - len(unique_items)};rc"
 
 
 if __name__ == "__main__":
-    # sys.argv[1:] = [
-    #     "--users-path",
-    #     "../users.txt",
-    #     "../input_file.txt",
-    # ]
     RatingCommodity().run()

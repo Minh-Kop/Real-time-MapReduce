@@ -1,5 +1,3 @@
-# import sys
-
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
@@ -33,10 +31,4 @@ class AvgRating(MRJob):
 
 
 if __name__ == "__main__":
-    # sys.argv[1:] = [
-    #     # "./input/input_file_copy.txt",
-    #     "-r",
-    #     "hadoop",
-    #     "hdfs://localhost:9000/user/mackop/input_file_copy.txt",
-    # ]
     AvgRating().run()
