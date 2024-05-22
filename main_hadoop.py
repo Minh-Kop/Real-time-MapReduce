@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 sys.path.append(os.path.abspath("./util"))
 
@@ -17,8 +18,8 @@ from clustering import run_clustering_proposal_2_chi2_ext1
 from clustering import run_clustering_proposal_2_chi2
 
 HADOOP_PATH = env_dict["hadoop_path"]
-NUMBER_OF_CLUSTERS = 2
-MULTIPLIER = 1
+NUMBER_OF_CLUSTERS = 3
+MULTIPLIER = 2
 
 
 def create_input_file(input_path, output_path):
@@ -99,36 +100,49 @@ def split_files_by_label(input_file_path, num):
 
 if __name__ == "__main__":
     source_file_path = "./input/u.data"
-    input_file_path = "./input/input_file_copy.txt"
+    # input_file_path = "./input/input_file_copy.txt"
+    input_file_path = "./input/input_file.txt"
     hdfs_input_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(input_file_path)}"
 
+    # Start timer
+    start_time = time.perf_counter()
+
     # create_input_file(input_path=source_file_path, output_path=input_file_path)
-    # put_files_to_hdfs(input_file_path, hdfs_input_file_path)
+    put_files_to_hdfs(input_file_path, hdfs_input_file_path)
 
     # create_users_items_file(input_file_path)
 
     # Clustering
     # num = run_clustering_proposal_2_chi2(hdfs_input_file_path, NUMBER_OF_CLUSTERS)
-    num = run_clustering_proposal_2_chi2_ext1(hdfs_input_file_path, NUMBER_OF_CLUSTERS, MULTIPLIER)
+    num = run_clustering_proposal_2_chi2_ext1(
+        hdfs_input_file_path, NUMBER_OF_CLUSTERS, MULTIPLIER
+    )
 
-#     # Split input file
-#     split_files_by_label(input_file_path, num=num)
-# 
-#     # MFPS
-#     mfps_result = []
-#     for index in range(NUMBER_OF_CLUSTERS):
-# 
-#         input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
-#         avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
-#         output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
-# 
-#         result_data = run_mfps(
-#             input_path=input_path,
-#             avg_ratings_path=avg_ratings_path,
-#             output_path=output_path,
-#         )
-#         mfps_result.append(result_data)
-#     mfps_result = [line for row in mfps_result for line in row]
-# 
-#     output_path = f"./hadoop_output/mfps.txt"
-#     write_data_to_file(output_path, mfps_result)
+    # Split input file
+    # num = 15
+    split_files_by_label(input_file_path, num=num)
+
+    # MFPS
+    mfps_result = []
+    for index in range(NUMBER_OF_CLUSTERS):
+        input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
+        avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
+        output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
+
+        result_data = run_mfps(
+            input_path=input_path,
+            avg_ratings_path=avg_ratings_path,
+            output_path=output_path,
+        )
+        mfps_result.append(result_data)
+    mfps_result = [line for row in mfps_result for line in row]
+
+    output_path = f"./hadoop_output/mfps.txt"
+    write_data_to_file(output_path, mfps_result)
+
+    # End timer
+    end_time = time.perf_counter()
+
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+    print("Elapsed time: ", elapsed_time)

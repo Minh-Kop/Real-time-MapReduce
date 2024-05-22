@@ -10,11 +10,11 @@ from create_user_item_matrix import UserItemMatrix
 from calculate_distance_between_users_centroid import DistanceBetweenUsersCentroid
 from kmeans import kmeans
 from get_max import GetMax
+from create_centroids import CreateCentroids
+from calculate_M_nearest_points import MNearestPoints
 from .calculate_avg_rating import AvgRating
 from .create_importance import Importance
-from .create_centroid import CreateCentroid
 from .create_centroids_list import CreateCentroidsList
-from .calculate_M_nearest_points import MNearestPoints
 from .discard_nearest_points import DiscardNearestPoints
 from .calculate_scaling import Scaling
 from .calculate_sum_F_D import SumFD
@@ -78,7 +78,7 @@ def run_clustering(input_file_path, number_of_clusters=3):
 
     # Create first centroid
     run_mr_job_hadoop(
-        CreateCentroid,
+        CreateCentroids,
         [
             f"{HADOOP_PATH}/clustering-output/full-matrix",
             f"{HADOOP_PATH}/clustering-output/max-F",
@@ -219,7 +219,7 @@ def run_clustering(input_file_path, number_of_clusters=3):
 
         # Create another centroid
         run_mr_job_hadoop(
-            CreateCentroid,
+            CreateCentroids,
             [
                 f"{HADOOP_PATH}/clustering-output/matrix-{i}",
                 f"{HADOOP_PATH}/clustering-output/max-F-D-{i}",
