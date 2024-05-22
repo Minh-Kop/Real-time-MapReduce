@@ -212,13 +212,7 @@ def evaluate(
     return rmse, f1_score
 
 
-import mfps.main as main
-
 if __name__ == "__main__":
-    # main.run_mfps(
-    #     "input/input_file.txt", "input/avg-file.txt", "./hadoop_output/mfps.txt"
-    # )
-
     source_file_path = "./input/u.data"
     item_file_path = "./input/u.item"
     all_user_path = "./input/input_file_copy.txt"
@@ -228,6 +222,8 @@ if __name__ == "__main__":
     train_file_path = "./input/train_input.txt"
     test_file_path = "./input/test_input.txt"
     sim_path = "./hadoop_output/mfps.txt"
-    avg_file_path = "./input/avg-file.txt"
+    avg_file_path = "./hadoop_output/avg-ratings.txt"
 
-    RMSE, F1 = evaluate(sim_path, train_file_path, test_file_path, avg_file_path, 10, 7)
+    RMSE, F1 = evaluate(
+        sim_path, train_file_path, test_file_path, avg_file_path, 10, None
+    )

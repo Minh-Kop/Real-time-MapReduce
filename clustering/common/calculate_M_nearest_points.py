@@ -1,5 +1,3 @@
-# import sys
-
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import TextProtocol
@@ -27,6 +25,8 @@ class MNearestPoints(MRJob):
     def configure_args(self):
         super(MNearestPoints, self).configure_args()
         self.add_passthru_arg("--M", type=int, default=1)
+        # self.add_passthru_arg("--is-ascending", type=bool, default=True)
+        self.add_passthru_arg("--is-ascending", type=int, default=1)
 
     def mapper(self, _, line):
         user, distance = line.strip().split("\t")
@@ -43,9 +43,13 @@ class MNearestPoints(MRJob):
         sorted_users_distances = users_distances[indices]
 
         M = self.options.M
+        is_ascending = self.options.is_ascending
 
         # Get top M values in sorted array
-        nearest_points = sorted_users_distances[:M]
+        if is_ascending:
+            nearest_points = sorted_users_distances[:M]
+        else:
+            nearest_points = sorted_users_distances[: -M - 1 : -1]
         return nearest_points
 
     def combiner(self, _, users_distances):
@@ -60,10 +64,13 @@ class MNearestPoints(MRJob):
 
 
 if __name__ == "__main__":
-    # M = 1
+    # import sys
+    # M = 3
     # sys.argv[1:] = [
-    #     "./clustering/output/D.txt",
+    #     "./clustering/proposal_1/output/D.txt",
     #     "--M",
     #     str(M),
+    #     "--is-ascending",
+    #     str(0),
     # ]
     MNearestPoints().run()
