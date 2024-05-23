@@ -81,8 +81,7 @@ def split_files_by_label(input_file_path, num):
         f"./hadoop_output/centroids-{num}.txt",
         sep="\t",
         dtype="str",
-        names=["key"],
-        usecols=[0],
+        names=["key", "value"],
     )
     for index, centroid in enumerate(centroids["key"]):
         # Export input file
@@ -96,6 +95,14 @@ def split_files_by_label(input_file_path, num):
         avg_ratings_i_path = f"input/avg-ratings-{index}.txt"
         avg_ratings_i.to_csv(avg_ratings_i_path, sep="\t", index=False, header=False)
         put_files_to_hdfs(avg_ratings_i_path, f"{avg_ratings_i_path}")
+
+        # Update centroid key
+        centroids.loc[index, "key"] = index
+
+    # Export new centroids
+    centroids_path = "input/centroids.txt"
+    centroids.to_csv(centroids_path, sep="\t", index=False, header=False)
+    put_files_to_hdfs(centroids_path, centroids_path)
 
 
 if __name__ == "__main__":
