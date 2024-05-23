@@ -193,7 +193,7 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
         run_mr_job_hadoop(
             RemoveCentroid,
             [
-                "hadoop_output/centroids.txt",
+                "hadoop_output/new-centroids.txt",
                 "--centroid",
                 curr_user,
             ],
