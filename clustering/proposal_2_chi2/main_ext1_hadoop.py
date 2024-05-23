@@ -9,22 +9,28 @@ sys.path.append(os.path.abspath("./clustering/common"))
 
 from custom_util import env_dict, run_mr_job_hadoop
 from create_user_item_matrix import UserItemMatrix
+from calculate_M_nearest_points import MNearestPoints
+from create_centroids import CreateCentroids
+from get_max import GetMax
+from kmeans import kmeans
 from .calculate_avg_and_sum import AvgAndSum
 from .calculate_class_probability import ClassProbability
 from .calculate_expected_value import ExpectedValue
 from .calculate_observed_value import ObservedValue
 from .calculate_chi2 import ChiSquare
 from .remove_centroid import RemoveCentroid
-from .calculate_distance_between_centroids import DisatanceBetweenCentroids
-from get_max import GetMax
-from .get_current_centroid import CurrentCentroid
+from .calculate_distance_between_centroids import DistanceBetweenCentroids
+from .filter_centroids import FilterCentroids
 
 HADOOP_PATH = env_dict["hadoop_path"]
 
 
-def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
+def run_clustering_chi2_ext1(
+    input_file_path, number_of_clusters=2, number_of_multiplications=1
+):
     # Number of items
-    items_file = open(f"input/items_copy.txt", "r")
+    # items_file = open(f"input/items_copy.txt", "r")
+    items_file = open(f"input/items.txt", "r")
     for number_of_items, _ in enumerate(items_file, start=1):
         pass
     items_file.close()
@@ -39,6 +45,15 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
     )
     print("Calculate average rating and sum rating of each user")
 
+    # Split average ratings to a separate file
+    run_mr_job_hadoop(
+        FilterCentroids,
+        [f"{HADOOP_PATH}/clustering-chi2-output/avg-sum", "--spilt-string", "|a"],
+        f"{HADOOP_PATH}/clustering-chi2-output/avg-ratings",
+        True,
+    )
+    print("Split average ratings to a separate file")
+
     # Create user-item matrix
     run_mr_job_hadoop(
         UserItemMatrix,
@@ -49,7 +64,6 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
             f"{HADOOP_PATH}/input/items_copy.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
-        True,
     )
     print("Create user-item matrix")
 
@@ -93,74 +107,62 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
             f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
-        True,
     )
     print("Calculate Chi2")
 
-    # Define the file paths
-    chi2_file_path = f"hadoop_output/chi2-value.txt"
-    fult_matrix_path = f"hadoop_output/full-matrix.txt"
-
-    # Read data from file A into a pandas DataFrame
-    chi2_df = pd.read_csv(
-        chi2_file_path, sep="\t", names=["key", "chi2_value"], dtype={0: np.int32}
+    # Get max Chi2
+    run_mr_job_hadoop(
+        MNearestPoints,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
+            "--M",
+            str(number_of_clusters * number_of_multiplications),
+            "--is-ascending",
+            str(0),
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
     )
+    print("Get top Chi2")
 
-    # Read data from file B into a pandas DataFrame
-    full_matrix_df = pd.read_csv(
-        fult_matrix_path, sep="\t", names=["key", "matrix_value"], dtype={0: np.int32}
+    # Create centroids
+    centroids = run_mr_job_hadoop(
+        CreateCentroids,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
+            f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/centroids",
     )
+    print("Create first centroids")
 
-    # Merge chi2_df and full_matrix_df on 'key'
-    merged_df = pd.merge(chi2_df, full_matrix_df, on="key")
-
-    # Sort merged DataFrame based on 'value_x' and select the top k elements
-    centroids_df = merged_df.sort_values(by="chi2_value", ascending=False).head(
-        noCluster * noMutiply
-    )
-    centroids_df = centroids_df.drop(columns=["chi2_value"])
-    
-    # Retrieve corresponding values from sorted_merged_df
-    corresponding_values = centroids_df[["key", "matrix_value"]].values.tolist()
-
-    # Select first centroid
-    curr_user = str(corresponding_values[0][0])
-    curr_coor = corresponding_values[0][1]
-
-    # Write centroids to file
-    with open('hadoop_output/centroids.txt','w') as file:
-        for i in corresponding_values:
-            file.writelines(f"{i[0]}\t{i[1]}\n")
-            i[1] = [float(coor.strip().split(';')[1] )for coor in (i[1].strip().split('|'))]
-
-    print(curr_user, curr_coor)
+    # Get max centroid
+    max_centroid = centroids[0].replace("\n", "").split("\t")
 
     # Remove current centroid
     run_mr_job_hadoop(
         RemoveCentroid,
         [
-            "hadoop_output/centroids.txt",
+            f"{HADOOP_PATH}/clustering-chi2-output/centroids",
             "--centroid",
-            curr_user,
+            max_centroid[0],
         ],
-        f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
-        True,
+        f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
     )
     print("Remove centroid")
 
     # Loop
-    for i in range(noCluster - 1):
-        print(f"Loop: {i + 1}")
+    for i in range(number_of_clusters - 1):
+        print(f"\nLoop: {i}")
+
         # Calculate distance between current to others centroids
         run_mr_job_hadoop(
-            DisatanceBetweenCentroids,
+            DistanceBetweenCentroids,
             [
-                f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
+                f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i}",
                 "--centroid-coord",
-                curr_coor,
+                max_centroid[1],
             ],
-            f"{HADOOP_PATH}/clustering-chi2-output/distance",
-            True,
+            f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
         )
         print("Calculate distance between centroids")
 
@@ -168,36 +170,45 @@ def run_clustering_chi2_ext1(input_file_path, noCluster=2, noMutiply=1):
         run_mr_job_hadoop(
             GetMax,
             [
-                f"{HADOOP_PATH}/clustering-chi2-output/distance",
+                f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
             ],
-            f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id",
-            True,
+            f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id-{i}",
         )
-        
-        run_mr_job_hadoop(
-            CurrentCentroid,
-            [
-                "hadoop_output/centroids.txt",
-                f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id",
-            ],
-            f"{HADOOP_PATH}/clustering-chi2-output/highest-centroids",
-            True,
+
+        max_centroid = (
+            run_mr_job_hadoop(
+                CreateCentroids,
+                [
+                    f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+                    f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id-{i}",
+                ],
+            )[0]
+            .replace("\n", "")
+            .split("\t")
         )
         print("Get highest centroid")
-
-        with open("hadoop_output/highest-centroids.txt", 'r') as file:
-            for line in file:
-                curr_user, curr_coor = line.strip().split('\t')
 
         # Remove highest centroid
         run_mr_job_hadoop(
             RemoveCentroid,
             [
-                "hadoop_output/new-centroids.txt",
+                f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i}",
                 "--centroid",
-                curr_user,
+                max_centroid[0],
             ],
-            f"{HADOOP_PATH}/clustering-chi2-output/new-centroids",
-            True,
+            f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i + 1}",
         )
         print("Remove highest centroid")
+
+    # Filter only centroids
+    centroids = run_mr_job_hadoop(
+        FilterCentroids,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/centroids-{number_of_clusters - 1}",
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/centroids-{number_of_clusters}",
+        True,
+    )
+    print("Filter only centroids")
+
+    return kmeans(number_of_clusters, "clustering-chi2-output", centroids)

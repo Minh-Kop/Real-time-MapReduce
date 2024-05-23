@@ -26,8 +26,7 @@ class MFPS(MRJob):
                 if flag == "rc":
                     mfps = 0
                     break
-                elif flag == "rd":
-                    mfps += 1.1
+                mfps += 1.1
                 continue
             mfps += 1 / sim
         if mfps:

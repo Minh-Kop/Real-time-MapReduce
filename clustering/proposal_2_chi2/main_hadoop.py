@@ -7,8 +7,10 @@ import numpy as np
 sys.path.append(os.path.abspath("./util"))
 sys.path.append(os.path.abspath("./clustering/common"))
 
-from custom_util import env_dict, run_mr_job_hadoop, put_files_to_hdfs
+from custom_util import env_dict, run_mr_job_hadoop
 from create_user_item_matrix import UserItemMatrix
+from create_centroids import CreateCentroids
+from calculate_M_nearest_points import MNearestPoints
 from kmeans import kmeans
 from .calculate_avg_and_sum import AvgAndSum
 from .calculate_class_probability import ClassProbability
@@ -19,7 +21,7 @@ from .calculate_chi2 import ChiSquare
 HADOOP_PATH = env_dict["hadoop_path"]
 
 
-def run_clustering_chi2(input_file_path, noCluster=3):
+def run_clustering_chi2(input_file_path, number_of_clusters=3):
     # Number of items
     items_file = open(f"input/items.txt", "r")
     for number_of_items, _ in enumerate(items_file, start=1):
@@ -96,46 +98,29 @@ def run_clustering_chi2(input_file_path, noCluster=3):
     )
     print("Calculate Chi2")
 
-    # Define the file paths
-    chi2_file_path = f"hadoop_output/chi2-value.txt"
-    fult_matrix_path = f"hadoop_output/full-matrix.txt"
-    noCluster = 3
+    # Get max Chi2
+    run_mr_job_hadoop(
+        MNearestPoints,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
+            "--M",
+            str(number_of_clusters),
+            "--is-ascending",
+            str(0),
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
+    )
+    print("Get top Chi2")
 
-    # Read data from file A into a pandas DataFrame
-    chi2_df = pd.read_csv(
-        chi2_file_path, sep="\t", names=["key", "chi2_value"], dtype={0: np.int32}
+    # Create centroids
+    centroids = run_mr_job_hadoop(
+        CreateCentroids,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
+            f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
     )
-
-    # Read data from file B into a pandas DataFrame
-    full_matrix_df = pd.read_csv(
-        fult_matrix_path, sep="\t", names=["key", "matrix_value"], dtype={0: np.int32}
-    )
-
-    # Merge chi2_df and full_matrix_df on 'key'
-    merged_df = pd.merge(chi2_df, full_matrix_df, on="key")
-
-    # Sort merged DataFrame based on 'value_x' and select the top k elements
-    centroids_df = merged_df.sort_values(by="chi2_value", ascending=False).head(
-        noCluster
-    )
-    centroids_df = centroids_df.drop(columns=["chi2_value"])
-    centroids_df.to_csv(
-        "clustering/proposal_2_chi2/output/centroids-0.txt",
-        sep="\t",
-        index=False,
-        header=False,
-    )
-    put_files_to_hdfs(
-        "clustering/proposal_2_chi2/output/centroids-0.txt",
-        "input/centroids-0.txt",
-    )
-
-    centroids = (
-        centroids_df["key"].astype(str)
-        + "\t"
-        + centroids_df["matrix_value"].astype(str)
-        + "\n"
-    )
-    centroids = centroids.values.tolist()
+    print("Create first centroids")
 
     return kmeans(0, "clustering-chi2-output", centroids)

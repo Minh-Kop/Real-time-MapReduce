@@ -39,7 +39,9 @@ def run_mr_job(mr_job_class, input_args):
         return data
 
 
-def run_mr_job_hadoop(mr_job_class, input_args, output_path, create_txt_file=False):
+def run_mr_job_hadoop(
+    mr_job_class, input_args, output_path=None, create_txt_file=False
+):
     input_args = ["-r", "hadoop"] + input_args
     if output_path:
         input_args = input_args + ["--output-dir", output_path]
