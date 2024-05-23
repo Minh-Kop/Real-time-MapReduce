@@ -23,7 +23,7 @@ HADOOP_PATH = env_dict["hadoop_path"]
 
 def run_clustering_chi2(input_file_path, number_of_clusters=3):
     # Number of items
-    items_file = open(f"input/items_copy.txt", "r")
+    items_file = open(f"input/items.txt", "r")
     for number_of_items, _ in enumerate(items_file, start=1):
         pass
     items_file.close()
@@ -45,7 +45,7 @@ def run_clustering_chi2(input_file_path, number_of_clusters=3):
             input_file_path,
             f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
             "--items-path",
-            f"{HADOOP_PATH}/input/items_copy.txt",
+            f"{HADOOP_PATH}/input/items.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         True,
@@ -55,7 +55,7 @@ def run_clustering_chi2(input_file_path, number_of_clusters=3):
     # Calculate class probability
     run_mr_job_hadoop(
         ClassProbability,
-        [f"{HADOOP_PATH}/input/items_copy.txt", "--n", str(number_of_items)],
+        [f"{HADOOP_PATH}/input/items.txt", "--n", str(number_of_items)],
         f"{HADOOP_PATH}/clustering-chi2-output/class-probability",
         True,
     )
@@ -70,6 +70,7 @@ def run_clustering_chi2(input_file_path, number_of_clusters=3):
             f"{HADOOP_PATH}/input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
+        True
     )
     print("Calculate expected value")
 
@@ -77,10 +78,11 @@ def run_clustering_chi2(input_file_path, number_of_clusters=3):
     run_mr_job_hadoop(
         ObservedValue,
         [
-            f"{HADOOP_PATH}/input/items_copy.txt",
+            f"{HADOOP_PATH}/input/items.txt",
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
+        True
     )
     print("Calculate observed value")
 

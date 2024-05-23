@@ -29,7 +29,7 @@ class ExpectedValue(MRJob):
 
         for label, probability in self.class_probabilities.itertuples(index=False):
             expected_value = sum * probability
-            yield user, f"{label};{expected_value}|e"
+            yield f"{user};{label}", f"{expected_value}|e"
 
 
 if __name__ == "__main__":

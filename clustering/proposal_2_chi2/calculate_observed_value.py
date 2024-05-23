@@ -35,7 +35,7 @@ class ObservedValue(MRJob):
         ratings = np.array(list(ratings))
 
         sum_ratings = np.sum(ratings, dtype=float)
-        yield user, f"{label};{sum_ratings}|o"
+        yield f"{user};{label}", f"{sum_ratings}|o"
 
     def steps(self):
         return [

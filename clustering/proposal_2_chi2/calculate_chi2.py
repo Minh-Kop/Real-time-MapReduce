@@ -7,10 +7,9 @@ class ChiSquare(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def calculate_Chi2_mapper(self, _, line):
-        user, value = line.strip().split("\t")
-        label, value_flag = value.strip().split(";")
+        key, value = line.strip().split("\t")
 
-        yield f"{user};{label}", value_flag
+        yield key, value
 
     def calculate_Chi2_reducer(self, user_label, values):
         user, _ = user_label.strip().split(";")
