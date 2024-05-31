@@ -1,7 +1,9 @@
 import pyspark, os
 import pandas as pd
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import split, col, when
+from pyspark.sql.functions import split, col, when, collect_list, coalesce, concat, udf, concat_ws
+from pyspark.sql.types import DoubleType, ArrayType
+import math
 
 # file_path = './spark/test1.csv'
 
@@ -16,6 +18,8 @@ spark = SparkSession.builder.appName('spark_clustering').getOrCreate()
 def write_to_file(df, file_name):
     df.coalesce(1).write.mode("overwrite").csv("file://" + os.path.abspath(file_name), header=True)
 
+def euclidean_distance(arr1, arr2):
+    return math.sqrt(sum((x-y)**2 for x,y in zip(arr1, arr2)))
 
 ### read input
 # read input file
@@ -38,6 +42,7 @@ spark_input_df = spark.createDataFrame(pd_input_df)
 
 ### Clustering
 number_of_clusters = 3
+multiplier = 10
 
 ## chi2
 # calculate user average
@@ -78,7 +83,38 @@ chi2_df = chi2_df.withColumn("temp", ((col("E")-col('sum(rating)'))**2)/col("E")
 chi2_df = chi2_df.groupBy('user').sum('temp').drop(*['count', 'E', 'sum(rating)'])
 # chi2_df = chi2_df.orderBy('user')
 
-# Get k user with highest chi2 as initial centroids
-centroids_df = chi2_df.orderBy(col('sum(temp)').desc()).limit(number_of_clusters)
-centroids_df = centroids_df.join(fill_matrix_df, on='user').drop(*['sum(temp)','categories']).orderBy('user')
-centroids_df.show()
+## Get initial centroids
+# Get k*a user with highest chi2
+centroids_df = chi2_df.orderBy(col('sum(temp)').desc()).limit(number_of_clusters * multiplier)
+centroids_df = centroids_df.join(fill_matrix_df, on='user').drop(*['sum(temp)','categories']).orderBy(['user','item'])
+
+## calculate distance between each centroid
+# get all rating in a array
+array_df = centroids_df.drop('item').groupBy('user').agg(collect_list('rating').alias('ratings')).orderBy('user')
+
+# choose first line as first initial user
+init_centroids_df = array_df.limit(1)
+
+## get all remaining clusters
+for i in range(number_of_clusters - 1):
+    # get the new centroid's user
+    curr_centroid_df = init_centroids_df.limit(1)
+
+    # cross joint and filter to get all user pair with that user
+    array_df = array_df.join(init_centroids_df, on='user', how='leftanti')
+    distances_df = array_df.crossJoin(curr_centroid_df.select([col('user').alias('user_'),col('ratings').alias('ratings_')]))
+    distances_df = distances_df.filter(col('user') != col('user_')).orderBy(['user', 'user_'])
+
+    # register the euclidean distance udf
+    euclidean_distance_udf = udf(euclidean_distance, DoubleType())
+
+    # calculate distance
+    distances_df = distances_df.withColumn("distance", euclidean_distance_udf(col('ratings'),col("ratings_"))).drop(*['ratings','ratings_']).orderBy(col('distance').desc())
+    
+    # add highest to the initial centroids
+    new_centroid_df = distances_df.limit(1).join(array_df, on='user')
+    new_centroid_df = new_centroid_df.select('user', 'ratings')
+
+    init_centroids_df = new_centroid_df.union(init_centroids_df)
+
+init_centroids_df.show()
