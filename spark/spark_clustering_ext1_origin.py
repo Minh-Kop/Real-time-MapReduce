@@ -1,120 +1,228 @@
-import pyspark, os
+import os
+
 import pandas as pd
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import split, col, when, collect_list, coalesce, concat, udf, concat_ws
-from pyspark.sql.types import DoubleType, ArrayType
-import math
+from pyspark.sql.functions import (
+    split,
+    col,
+    when,
+    collect_list,
+    pandas_udf,
+    sum as spark_sum,
+    max as spark_max,
+)
+from pyspark.sql.types import (
+    StructType,
+    StructField,
+    StringType,
+    DoubleType,
+    IntegerType,
+)
+import numpy as np
 
-# file_path = './spark/test1.csv'
-
-# spark = SparkSession.builder.appName('spark_clustering').getOrCreate()
-# new_df = spark.read.csv('file://' + os.path.abspath(file_path), header=True, inferSchema=True).show()
-
-input_file_path = './input/input_file.txt'
-item_file_path = './input/items.txt'
-
-spark = SparkSession.builder.appName('spark_clustering').getOrCreate()
 
 def write_to_file(df, file_name):
-    df.coalesce(1).write.mode("overwrite").csv("file://" + os.path.abspath(file_name), header=True)
+    df.write.mode("overwrite").csv("file://" + os.path.abspath(file_name), header=True)
 
-def euclidean_distance(arr1, arr2):
-    return math.sqrt(sum((x-y)**2 for x,y in zip(arr1, arr2)))
 
-### read input
-# read input file
-pd_input_df = pd.read_csv(input_file_path, sep='\t', names=['user-item','rating-time'])
-pd_input_df[['user','item']] = pd_input_df['user-item'].str.split(';', expand=True)
-pd_input_df[['rating','time']] = pd_input_df['rating-time'].str.split(';', expand=True)
-pd_input_df = pd_input_df.drop(['user-item','rating-time','time'], axis=1)
-pd_input_df['rating'] = pd_input_df['rating'].astype(float)
+if __name__ == "__main__":
+    # input_file_path = "input/input_file.txt"
+    # item_file_path = "input/items.txt"
+    input_file_path = "input/input_file_copy.txt"
+    item_file_path = "input/items_copy.txt"
 
-# read item file
-pd_item_df = pd.read_csv(item_file_path, sep='\t', names=['item', 'categories']).astype(str)
-spark_item_df = spark.createDataFrame(pd_item_df)
+    # Create a spark instance
+    spark = (
+        SparkSession.builder.appName("Clustering proposal 2 extension 1")
+        .config("spark.hadoop.fs.defaultFS", "file:///")
+        .config("spark.driver.memory", "4g")
+        .getOrCreate()
+    )
 
-# drop time, merge categories into input
-pd_input_df = pd.merge(pd_input_df, pd_item_df, on='item')
+    @pandas_udf(DoubleType())
+    def calculate_euclidean_distances(s1: pd.Series, s2: pd.Series) -> pd.Series:
+        df1 = pd.DataFrame(s1.tolist())
+        df2 = pd.DataFrame(s2.tolist())
+        return np.sqrt(((df1 - df2) ** 2).sum(axis=1))
 
-# transfer from pandas to spark DataFrame
-spark_input_df = spark.createDataFrame(pd_input_df)
-# spark_input_df.printSchema()
+    ### read input
+    input_df = spark.read.csv(
+        path=input_file_path,
+        schema=StructType(
+            [
+                StructField("user-item", StringType(), False),
+                StructField("rating-time", StringType(), False),
+            ]
+        ),
+        sep="\t",
+    )
 
-### Clustering
-number_of_clusters = 3
-multiplier = 10
+    user_item_split_col = split(input_df["user-item"], ";")
+    rating_time_split_col = split(input_df["rating-time"], ";")
 
-## chi2
-# calculate user average
-user_avg_df = spark_input_df.groupBy('user').mean('rating')
+    input_df = input_df.select(
+        user_item_split_col.getItem(0).alias("user").cast(IntegerType()),
+        user_item_split_col.getItem(1).alias("item").cast(IntegerType()),
+        rating_time_split_col.getItem(0).alias("rating").cast(IntegerType()),
+    )
 
-# create a list full user-item matrix
-matrix_df = user_avg_df.crossJoin(spark_item_df)
+    items_df = spark.read.csv(
+        path=item_file_path,
+        schema=StructType(
+            [
+                StructField("item", IntegerType(), False),
+                StructField("category", StringType(), False),
+            ]
+        ),
+        sep="\t",
+    )
 
-# join observed into full matrix
-matrix_df = matrix_df.join(spark_input_df, on=['user', 'item', 'categories'], how='left')
+    # Filter to remove unrated items
+    items_df = items_df.join(input_df, on="item", how="left_semi")
 
-# add average for all null value
-full_matrix_df = matrix_df.withColumn("rating", when(col("rating").isNull(), col("avg(rating)")).otherwise(col("rating")))
+    ### Clustering
+    number_of_clusters = 3
+    multiplier = 10
 
-# drop avg
-fill_matrix_df = full_matrix_df.drop('avg(rating)')
+    ## Chi2
+    # Calculate user average
+    user_avg_df = input_df.groupBy("user").mean("rating")
 
-# observe value
-observed_df = fill_matrix_df.groupBy(['user','categories']).sum('rating')
-# observed_df = observed_df.orderBy(['user','categories'])
+    # Create a list user-item matrix
+    matrix_df = user_avg_df.crossJoin(items_df)
+    matrix_df.show()
 
-# categories probability
-cate_prob_df = fill_matrix_df.groupBy('categories').count()
-cate_prob_df = cate_prob_df.withColumn('count', col('count') / fill_matrix_df.count())
+    # Join observed into full matrix
+    matrix_df = matrix_df.join(input_df, on=["user", "item"], how="left")
+    matrix_df.show()
+    print(matrix_df.count())
 
-# sum user rating
-sum_rating_df = fill_matrix_df.groupBy('user').sum('rating')
+    # Add average for all null value
+    filled_matrix_df = matrix_df.withColumn(
+        "rating",
+        when(col("rating").isNull(), col("avg(rating)")).otherwise(col("rating")),
+    ).drop("avg(rating)")
+    filled_matrix_df.show()
 
-# expected value
-expected_df = sum_rating_df.crossJoin(cate_prob_df)
-expected_df = expected_df.withColumn("E", col('count')*col('sum(rating)'))
-expected_df = expected_df.drop('sum(rating)')
-# expected_df = expected_df.orderBy(['user','categories'])
+    # Calculate observed value
+    observed_df = filled_matrix_df.groupBy(["user", "category"]).agg(
+        spark_sum("rating").alias("observed-value")
+    )
+    observed_df.show()
 
-# Chi2
-chi2_df = expected_df.join(observed_df, on=['user', 'categories'])
-chi2_df = chi2_df.withColumn("temp", ((col("E")-col('sum(rating)'))**2)/col("E"))
-chi2_df = chi2_df.groupBy('user').sum('temp').drop(*['count', 'E', 'sum(rating)'])
-# chi2_df = chi2_df.orderBy('user')
+    # Calculate category probabilities
+    category_df = items_df.groupBy("category").count()
+    category_df.show()
+    category_df = category_df.withColumn("percentage", col("count") / items_df.count())
+    category_df.show()
 
-## Get initial centroids
-# Get k*a user with highest chi2
-centroids_df = chi2_df.orderBy(col('sum(temp)').desc()).limit(number_of_clusters * multiplier)
-centroids_df = centroids_df.join(fill_matrix_df, on='user').drop(*['sum(temp)','categories']).orderBy(['user','item'])
+    # Sum user rating
+    sum_rating_df = filled_matrix_df.groupBy("user").sum("rating")
+    sum_rating_df.show()
 
-## calculate distance between each centroid
-# get all rating in a array
-array_df = centroids_df.drop('item').groupBy('user').agg(collect_list('rating').alias('ratings')).orderBy('user')
+    # Calculate expected value
+    expected_df = sum_rating_df.crossJoin(category_df)
+    expected_df.show()
+    expected_df = expected_df.withColumn(
+        "expected-value", col("percentage") * col("sum(rating)")
+    ).drop("sum(rating)", "count", "percentage")
 
-# choose first line as first initial user
-init_centroids_df = array_df.limit(1)
+    expected_df.show()
 
-## get all remaining clusters
-for i in range(number_of_clusters - 1):
-    # get the new centroid's user
-    curr_centroid_df = init_centroids_df.limit(1)
+    # Calculate chi2
+    chi2_df = expected_df.join(observed_df, on=["user", "category"])
+    chi2_df.show()
+    chi2_df = chi2_df.withColumn(
+        "chi2",
+        ((col("expected-value") - col("observed-value")) ** 2) / col("expected-value"),
+    ).drop("expected-value", "observed-value")
+    chi2_df = chi2_df.groupBy("user").sum("chi2")
+    chi2_df.show()
 
-    # cross joint and filter to get all user pair with that user
-    array_df = array_df.join(init_centroids_df, on='user', how='leftanti')
-    distances_df = array_df.crossJoin(curr_centroid_df.select([col('user').alias('user_'),col('ratings').alias('ratings_')]))
-    distances_df = distances_df.filter(col('user') != col('user_')).orderBy(['user', 'user_'])
+    ## Get initial centroids
+    # Get k*a user with highest chi2
+    centroids_df = chi2_df.orderBy(col("sum(chi2)").desc()).limit(
+        number_of_clusters * multiplier
+    )
+    centroids_df.show()
 
-    # register the euclidean distance udf
-    euclidean_distance_udf = udf(euclidean_distance, DoubleType())
+    centroids_df = (
+        centroids_df.drop("sum(chi2)")
+        .join(filled_matrix_df.drop("category"), on="user")
+        .orderBy(["user", "item"])
+    )
+    centroids_df.show()
 
-    # calculate distance
-    distances_df = distances_df.withColumn("distance", euclidean_distance_udf(col('ratings'),col("ratings_"))).drop(*['ratings','ratings_']).orderBy(col('distance').desc())
-    
-    # add highest to the initial centroids
-    new_centroid_df = distances_df.limit(1).join(array_df, on='user')
-    new_centroid_df = new_centroid_df.select('user', 'ratings')
+    ## Calculate distance between each centroid
+    # Get all rating in a array
+    user_ratings_df = (
+        centroids_df.drop("item")
+        .groupBy("user")
+        .agg(collect_list("rating").alias("ratings"))
+        # .orderBy("user")
+    )
+    user_ratings_df.show()
 
-    init_centroids_df = new_centroid_df.union(init_centroids_df)
+    # Choose first line as first initial user
+    centroids_df = user_ratings_df.limit(1)
+    print("Centroids:")
+    centroids_df.show()
 
-init_centroids_df.show()
+    ## Get all remaining clusters
+    for i in range(number_of_clusters - 1):
+        # Get the new centroid's user
+        current_centroid_df = centroids_df.limit(1)
+        current_centroid_df.show()
+        current_centroid_df.printSchema()
+
+        user_ratings_df.show()
+        user_ratings_df.printSchema()
+
+        # Remove current centroid out of matrix
+        user_ratings_df = user_ratings_df.filter(
+            f"user != {current_centroid_df.collect()[0].user}"
+        )
+        user_ratings_df.show()
+
+        # Cross joint and filter to get all user pair with that user
+        distances_df = user_ratings_df.crossJoin(
+            current_centroid_df.select(
+                col("user").alias("user_"), col("ratings").alias("ratings_")
+            )
+        )
+        distances_df.show()
+        distances_df.printSchema()
+
+        # Calculate distance
+        distances_df = (
+            distances_df.withColumn(
+                "distance",
+                calculate_euclidean_distances(col("ratings"), col("ratings_")),
+            )
+            .drop("ratings", "ratings_")
+            .orderBy(col("distance").desc())
+        )
+        distances_df.show()
+
+        # max_distance = distances_df.select(spark_max("distance")).collect()[0][0]
+        # print(f"Max distance: {max_distance}")
+
+        # Add highest to the initial centroids
+        new_centroid_df = user_ratings_df.join(
+            distances_df.limit(1),
+            on="user",
+            how="left_semi",
+            # distances_df.filter(f"distance == {max_distance}"),
+            # on="user",
+            # how="left_semi",
+        )
+        new_centroid_df.show()
+
+        centroids_df = new_centroid_df.union(centroids_df)
+        centroids_df.show()
+
+        ## KMeans
+    while True:
+        centroids_df.show()
+        user_ratings_df.show()
+        break
