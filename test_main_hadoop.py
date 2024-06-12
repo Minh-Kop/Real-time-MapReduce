@@ -140,32 +140,32 @@ if __name__ == "__main__":
     #         if(flag == 'a'):
     #             file2.write(value + '\n')
 
-    # source_file_path = "./input/u.data"
-    train_file_path = "./input/train_input.txt"
-    test_file_path = "./input/test_input.txt"
-    sim_path = "./hadoop_output/mfps.txt"
-    avg_file_path = "./input/avg-file.txt"
-    # # ratio = 0.8
+    # # source_file_path = "./input/u.data"
+    # train_file_path = "./input/train_input.txt"
+    # test_file_path = "./input/test_input.txt"
+    # sim_path = "./hadoop_output/mfps.txt"
+    # avg_file_path = "./input/avg-file.txt"
+    # # # ratio = 0.8
 
-    # split file
-    # split_test_train(source_file_path, train_file_path, test_file_path, ratio)
-    RMSE, F1 = evaluate(sim_path, train_file_path, test_file_path, avg_file_path, 10)
-    print(RMSE, F1)
+    # # split file
+    # # split_test_train(source_file_path, train_file_path, test_file_path, ratio)
+    # RMSE, F1 = evaluate(sim_path, train_file_path, test_file_path, avg_file_path, 10)
+    # print(RMSE, F1)
 
     # MFPS
-    # mfps_result = []
+    mfps_result = []
 
-    # input_path = f"{HADOOP_PATH}/input/train_input.txt"
-    # avg_ratings_path = f"{HADOOP_PATH}/input/avg-file.txt"
-    # output_path = f"{HADOOP_PATH}/mfps-output/mfps"
+    input_path = f"{HADOOP_PATH}/input/input_file.txt"
+    avg_ratings_path = f"{HADOOP_PATH}/input/avg-file.txt"
+    output_path = f"{HADOOP_PATH}/mfps-output/mfps"
 
-    # result_data = run_mfps(
-    #     input_path=input_path,
-    #     avg_ratings_path=avg_ratings_path,
-    #     output_path=output_path,
-    # )
-    # mfps_result.append(result_data)
-    # mfps_result = [line for row in mfps_result for line in row]
+    result_data = run_mfps(
+        input_path=input_path,
+        avg_ratings_path=avg_ratings_path,
+        output_path=output_path,
+    )
+    mfps_result.append(result_data)
+    mfps_result = [line for row in mfps_result for line in row]
 
-    # output_path = f"./hadoop_output/mfps.txt"
-    # write_data_to_file(output_path, mfps_result)
+    output_path = f"./hadoop_output/mfps.txt"
+    write_data_to_file(output_path, mfps_result)
