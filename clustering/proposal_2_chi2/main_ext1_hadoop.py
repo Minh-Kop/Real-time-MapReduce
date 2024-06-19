@@ -99,7 +99,7 @@ def run_clustering_chi2_ext1(
     )
     print("Calculate observed value")
 
-    # Calculate Chi2
+    # Calculate chi2
     run_mr_job_hadoop(
         ChiSquare,
         [
