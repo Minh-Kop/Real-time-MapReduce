@@ -1,7 +1,4 @@
-# import sys
-
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -15,7 +12,7 @@ class DistanceBetweenUsersCentroid(MRJob):
         self.add_file_arg("--centroids-path", help="Path to init centroid file")
         self.add_passthru_arg("--return-centroid-id", type=bool, default=False)
 
-    def distance_between_users_centroid_mapper(self, _, line):
+    def mapper(self, _, line):
         user, value = line.strip().split("\t")
         yield f"{user}", f"{value}"
 
@@ -38,12 +35,12 @@ class DistanceBetweenUsersCentroid(MRJob):
         centroids = centroids.reshape(-1, col_num)
         return centroid_ids, centroids
 
-    def distance_between_users_centroid_reducer_init(self):
+    def reducer_init(self):
         self.centroid_ids, self.centroids = self.getInitCentroid(
             self.options.centroids_path
         )
 
-    def distance_between_users_centroid_reducer(self, user, value):
+    def reducer(self, user, value):
         value = list(value)[0].strip()
         coordinate = value.split("|")
         coordinate = [el.strip().split(";") for el in coordinate]
@@ -61,17 +58,9 @@ class DistanceBetweenUsersCentroid(MRJob):
         else:
             yield user, f"{min_euclidean_distance}"
 
-    def steps(self):
-        return [
-            MRStep(
-                mapper=self.distance_between_users_centroid_mapper,
-                reducer_init=self.distance_between_users_centroid_reducer_init,
-                reducer=self.distance_between_users_centroid_reducer,
-            )
-        ]
-
 
 if __name__ == "__main__":
+    # import sys
     # sys.argv[1:] = [
     #     './output/user_item_matrix.txt',
     #     '--centroids-path', './output/centroids.txt',

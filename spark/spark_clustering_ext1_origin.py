@@ -1,7 +1,5 @@
-import os
-
 import pandas as pd
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import (
     split,
     col,
@@ -9,7 +7,7 @@ from pyspark.sql.functions import (
     collect_list,
     pandas_udf,
     sum as spark_sum,
-    max as spark_max,
+    dense_rank,
 )
 from pyspark.sql.types import (
     StructType,
@@ -17,25 +15,21 @@ from pyspark.sql.types import (
     StringType,
     DoubleType,
     IntegerType,
+    ArrayType,
 )
 import numpy as np
 
 
-def write_to_file(df, file_name):
-    df.write.mode("overwrite").csv("file://" + os.path.abspath(file_name), header=True)
-
-
-if __name__ == "__main__":
-    # input_file_path = "input/input_file.txt"
-    # item_file_path = "input/items.txt"
-    input_file_path = "input/input_file_copy.txt"
-    item_file_path = "input/items_copy.txt"
-
-    # Create a spark instance
+def run_spark_clustering(
+    input_file_path, item_file_path, output_path, number_of_clusters=3, multiplier=1
+):
+    ### Create a spark instance
     spark = (
         SparkSession.builder.appName("Clustering proposal 2 extension 1")
         .config("spark.hadoop.fs.defaultFS", "file:///")
-        .config("spark.driver.memory", "4g")
+        .config("spark.driver.memory", "8g")
+        .config("spark.sql.shuffle.partitions", 8)
+        .config("spark.sql.execution.arrow.pyspark.enabled", "true")
         .getOrCreate()
     )
 
@@ -45,7 +39,7 @@ if __name__ == "__main__":
         df2 = pd.DataFrame(s2.tolist())
         return np.sqrt(((df1 - df2) ** 2).sum(axis=1))
 
-    ### read input
+    ### Read input
     input_df = spark.read.csv(
         path=input_file_path,
         schema=StructType(
@@ -65,6 +59,7 @@ if __name__ == "__main__":
         user_item_split_col.getItem(1).alias("item").cast(IntegerType()),
         rating_time_split_col.getItem(0).alias("rating").cast(IntegerType()),
     )
+    input_df.persist()
 
     items_df = spark.read.csv(
         path=item_file_path,
@@ -79,121 +74,108 @@ if __name__ == "__main__":
 
     # Filter to remove unrated items
     items_df = items_df.join(input_df, on="item", how="left_semi")
+    items_df.persist()
+    number_of_items = items_df.count()
 
     ### Clustering
-    number_of_clusters = 3
-    multiplier = 10
-
     ## Chi2
     # Calculate user average
     user_avg_df = input_df.groupBy("user").mean("rating")
 
-    # Create a list user-item matrix
+    # Create an user-item matrix
     matrix_df = user_avg_df.crossJoin(items_df)
-    matrix_df.show()
 
     # Join observed into full matrix
     matrix_df = matrix_df.join(input_df, on=["user", "item"], how="left")
-    matrix_df.show()
-    print(matrix_df.count())
 
     # Add average for all null value
     filled_matrix_df = matrix_df.withColumn(
         "rating",
         when(col("rating").isNull(), col("avg(rating)")).otherwise(col("rating")),
     ).drop("avg(rating)")
-    filled_matrix_df.show()
+    filled_matrix_df.persist()
+
+    # Create user-ratings matrix
+    user_ratings_df = filled_matrix_df.groupBy("user").agg(
+        collect_list("rating").alias("ratings")
+    )
+    print("Create user-ratings matrix")
+    user_ratings_df.persist()
 
     # Calculate observed value
     observed_df = filled_matrix_df.groupBy(["user", "category"]).agg(
         spark_sum("rating").alias("observed-value")
     )
-    observed_df.show()
+    print("Calculate observed value")
 
     # Calculate category probabilities
     category_df = items_df.groupBy("category").count()
-    category_df.show()
-    category_df = category_df.withColumn("percentage", col("count") / items_df.count())
-    category_df.show()
+    category_df = category_df.withColumn("percentage", col("count") / number_of_items)
+    print("Calculate category probabilities")
 
     # Sum user rating
     sum_rating_df = filled_matrix_df.groupBy("user").sum("rating")
-    sum_rating_df.show()
+    print("Sum user rating")
 
     # Calculate expected value
     expected_df = sum_rating_df.crossJoin(category_df)
-    expected_df.show()
     expected_df = expected_df.withColumn(
         "expected-value", col("percentage") * col("sum(rating)")
     ).drop("sum(rating)", "count", "percentage")
-
-    expected_df.show()
+    print("Calculate expected value")
 
     # Calculate chi2
     chi2_df = expected_df.join(observed_df, on=["user", "category"])
-    chi2_df.show()
     chi2_df = chi2_df.withColumn(
         "chi2",
         ((col("expected-value") - col("observed-value")) ** 2) / col("expected-value"),
     ).drop("expected-value", "observed-value")
-    chi2_df = chi2_df.groupBy("user").sum("chi2")
-    chi2_df.show()
+    chi2_df = chi2_df.groupBy("user").sum("chi2").orderBy(col("sum(chi2)").desc())
+    print("Calculate chi2")
 
     ## Get initial centroids
     # Get k*a user with highest chi2
-    centroids_df = chi2_df.orderBy(col("sum(chi2)").desc()).limit(
-        number_of_clusters * multiplier
+    top_chi2_user_ratings_df = (
+        chi2_df.drop("sum(chi2)")
+        .limit(number_of_clusters * multiplier)
+        .join(user_ratings_df, on="user")
     )
-    centroids_df.show()
+    print("Get k*a user with highest chi2")
+    top_chi2_user_ratings_df.persist()
+    top_chi2_user_ratings_df.show()
 
-    centroids_df = (
-        centroids_df.drop("sum(chi2)")
-        .join(filled_matrix_df.drop("category"), on="user")
-        .orderBy(["user", "item"])
-    )
-    centroids_df.show()
+    # Free storage
+    items_df.unpersist()
+    input_df.unpersist()
+    filled_matrix_df.unpersist()
 
-    ## Calculate distance between each centroid
-    # Get all rating in a array
-    user_ratings_df = (
-        centroids_df.drop("item")
-        .groupBy("user")
-        .agg(collect_list("rating").alias("ratings"))
-        # .orderBy("user")
-    )
-    user_ratings_df.show()
-
-    # Choose first line as first initial user
-    centroids_df = user_ratings_df.limit(1)
-    print("Centroids:")
-    centroids_df.show()
+    # Choose first line as first initial centroid
+    print("Choose first line as first initial centroid")
+    centroid_ratings_df = top_chi2_user_ratings_df.limit(1)
+    centroid_ratings_df.persist()
 
     ## Get all remaining clusters
     for i in range(number_of_clusters - 1):
         # Get the new centroid's user
-        current_centroid_df = centroids_df.limit(1)
-        current_centroid_df.show()
-        current_centroid_df.printSchema()
-
-        user_ratings_df.show()
-        user_ratings_df.printSchema()
+        current_centroid_df = centroid_ratings_df.limit(1)
+        print("Get the new centroid")
 
         # Remove current centroid out of matrix
-        user_ratings_df = user_ratings_df.filter(
-            f"user != {current_centroid_df.collect()[0].user}"
+        current_centroid_user = current_centroid_df.collect()[0].user
+        new_top_chi2_user_ratings_df = top_chi2_user_ratings_df.filter(
+            f"user != {current_centroid_user}"
         )
-        user_ratings_df.show()
+        print("Remove current centroid out of matrix")
+        new_top_chi2_user_ratings_df.persist()
 
-        # Cross joint and filter to get all user pair with that user
-        distances_df = user_ratings_df.crossJoin(
+        # Cross joint to get all user pair with that user
+        distances_df = new_top_chi2_user_ratings_df.crossJoin(
             current_centroid_df.select(
                 col("user").alias("user_"), col("ratings").alias("ratings_")
             )
         )
-        distances_df.show()
-        distances_df.printSchema()
 
-        # Calculate distance
+        # Calculate distances
         distances_df = (
             distances_df.withColumn(
                 "distance",
@@ -202,27 +184,119 @@ if __name__ == "__main__":
             .drop("ratings", "ratings_")
             .orderBy(col("distance").desc())
         )
-        distances_df.show()
-
-        # max_distance = distances_df.select(spark_max("distance")).collect()[0][0]
-        # print(f"Max distance: {max_distance}")
 
         # Add highest to the initial centroids
-        new_centroid_df = user_ratings_df.join(
-            distances_df.limit(1),
+        next_centroid_df = new_top_chi2_user_ratings_df.join(
+            distances_df.select("user").limit(1),
             on="user",
             how="left_semi",
-            # distances_df.filter(f"distance == {max_distance}"),
-            # on="user",
-            # how="left_semi",
         )
-        new_centroid_df.show()
+        print("Add highest to the initial centroids")
 
-        centroids_df = new_centroid_df.union(centroids_df)
-        centroids_df.show()
+        new_centroid_ratings_df = next_centroid_df.union(
+            centroid_ratings_df
+        ).distinct()  #### Problem here
+        new_centroid_ratings_df.persist()
+        new_centroid_ratings_df.show()
 
-        ## KMeans
+        centroid_ratings_df.unpersist()
+        centroid_ratings_df = new_centroid_ratings_df
+
+        top_chi2_user_ratings_df.unpersist()
+        top_chi2_user_ratings_df = new_top_chi2_user_ratings_df
+
+    top_chi2_user_ratings_df.unpersist()
+
+    ## KMeans
     while True:
-        centroids_df.show()
-        user_ratings_df.show()
-        break
+        print("Start loop")
+        # print("Centroids")
+        # centroid_ratings_df.show()
+        # print("Matrix")
+        # user_ratings_df.show()
+
+        # Calculate distances between each user to all centroids
+        distances_df = user_ratings_df.drop("centroid").crossJoin(
+            centroid_ratings_df.select(
+                col("user").alias("centroid"),
+                col("ratings").alias("centroid-ratings"),
+            )
+        )
+
+        window_spec = Window.partitionBy("user").orderBy("distance")
+        distances_df = (
+            distances_df.withColumn(
+                "distance",
+                calculate_euclidean_distances(col("ratings"), col("centroid-ratings")),
+            )
+            .drop("centroid-ratings")
+            .withColumn("rank", dense_rank().over(window_spec))
+        )
+        print("Calculate distances")
+
+        # Label new centroids for all users based on the above distances
+        new_user_ratings_df = distances_df.select("user", "ratings", "centroid").filter(
+            "rank == 1"
+        )
+        print("Users with new centroids")
+        new_user_ratings_df.persist()
+        new_user_ratings_df.show()
+
+        user_ratings_df.unpersist()
+        user_ratings_df = new_user_ratings_df
+
+        # Update centroids after labelling
+        @pandas_udf(ArrayType(DoubleType()))
+        def calculate_average_coordinates(s1: pd.Series) -> list:
+            df1 = pd.DataFrame(s1.tolist())
+            return df1.mean()
+
+        new_centroid_ratings_df = user_ratings_df.groupBy(
+            col("centroid").alias("user")
+        ).agg(calculate_average_coordinates("ratings").alias("ratings"))
+        print("Update centroids after labelling")
+        new_centroid_ratings_df.persist()
+
+        # Check if centroids converged
+        number_of_converged_centroids = new_centroid_ratings_df.join(
+            centroid_ratings_df.select("ratings"), on="ratings"
+        ).count()
+        print(
+            f"Number of clusters: {number_of_clusters}, number of converged centroids: {number_of_converged_centroids}"
+        )
+        centroid_ratings_df.unpersist()
+        centroid_ratings_df = new_centroid_ratings_df
+
+        if number_of_converged_centroids == number_of_clusters:
+            centroid_ratings_df.unpersist()
+            print("Converged\n")
+            break
+        print("End loop\n")
+
+    # print("Final matrix")
+    # user_ratings_df.show()
+
+    ## Save matrix
+    user_ratings_df.write.format("parquet").mode("overwrite").save(output_path)
+
+
+if __name__ == "__main__":
+    # input_file_path = "input/input_file.txt"
+    # item_file_path = "input/items.txt"
+    input_file_path = "input/input_file_copy.txt"
+    item_file_path = "input/items_copy.txt"
+    output_path = "output/labels_"
+
+    import time
+
+    # Start timer
+    start_time = time.perf_counter()
+
+    run_spark_clustering(input_file_path, item_file_path, output_path, multiplier=10)
+
+    # End timer
+    end_time = time.perf_counter()
+
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+    print("Elapsed time: ", elapsed_time)
