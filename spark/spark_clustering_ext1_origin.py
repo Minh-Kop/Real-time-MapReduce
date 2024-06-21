@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import (
@@ -21,13 +23,18 @@ import numpy as np
 
 
 def run_spark_clustering(
-    input_file_path, item_file_path, output_path, number_of_clusters=3, multiplier=1
+    input_file_path,
+    item_file_path,
+    label_output_path,
+    centroid_output_path,
+    number_of_clusters=3,
+    multiplier=1,
 ):
     ### Create a spark instance
     spark = (
         SparkSession.builder.appName("Clustering proposal 2 extension 1")
-        .config("spark.hadoop.fs.defaultFS", "file:///")
-        .config("spark.driver.memory", "8g")
+        # .config("spark.hadoop.fs.defaultFS", "file:///")
+        .config("spark.driver.memory", "10g")
         .config("spark.sql.shuffle.partitions", 8)
         .config("spark.sql.execution.arrow.pyspark.enabled", "true")
         .getOrCreate()
@@ -267,7 +274,6 @@ def run_spark_clustering(
         centroid_ratings_df = new_centroid_ratings_df
 
         if number_of_converged_centroids == number_of_clusters:
-            centroid_ratings_df.unpersist()
             print("Converged\n")
             break
 
@@ -275,29 +281,32 @@ def run_spark_clustering(
         i = i + 1
 
     print("Final matrix")
-    user_ratings_df.show()
 
-    ## Save matrix
-    # user_ratings_df.write.format("parquet").mode("overwrite").save(output_path)
+    ## Save to file
+    user_ratings_df.drop("ratings").write.mode("overwrite").save(label_output_path)
+    centroid_ratings_df.orderBy("user").write.mode("overwrite").save(
+        centroid_output_path
+    )
 
 
 if __name__ == "__main__":
     # input_file_path = "input/input_file.txt"
     # item_file_path = "input/items.txt"
-    input_file_path = "input/input_file_copy.txt"
-    item_file_path = "input/items_copy.txt"
-    output_path = "output/labels_"
-
-    import time
+    input_file_path = "spark/input/input_file_copy.txt"
+    item_file_path = "spark/input/items_copy.txt"
+    label_output_path = "spark/output/labels"
+    centroid_output_path = "spark/output/centroids"
 
     # Start timer
     start_time = time.perf_counter()
 
-    run_spark_clustering(input_file_path, item_file_path, output_path, multiplier=1)
+    run_spark_clustering(
+        input_file_path, item_file_path, label_output_path, centroid_output_path
+    )
 
     # End timer
     end_time = time.perf_counter()
 
     # Calculate elapsed time
     elapsed_time = end_time - start_time
-    print("Elapsed time: ", elapsed_time)
+    print(f"Elapsed time: {elapsed_time}s")
