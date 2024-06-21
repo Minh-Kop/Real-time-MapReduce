@@ -1,216 +1,163 @@
-import pyspark, os
+import math
+
 import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    split,
     col,
-    when,
     collect_list,
-    coalesce,
-    concat,
-    udf,
-    lit,
     pandas_udf,
-    concat_ws,
     array,
+    mean as spark_mean,
 )
-from pyspark.sql.types import (
-    DoubleType,
-    ArrayType,
-    NullType,
-    IntegerType,
-    StructType,
-    StructField,
-    StringType,
-    FloatType,
-)
+from pyspark.sql.types import IntegerType, DoubleType, ArrayType
 from pyspark import SparkConf
-import math
 
 
-def write_to_file(df, file_name):
-    df.coalesce(1).write.csv(
-        "file://" + os.path.abspath(f"./spark/{file_name}"), header=True
-    )
+# input_file_path = "./input/input_file.txt"
+# item_file_path = "./input/items.txt"
+input_file_path = "input/input_file_copy.txt"
+item_file_path = "input/items_copy.txt"
 
-
-input_file_path = "./input/input_file.txt"
-item_file_path = "./input/items.txt"
 spark_config = (
     SparkConf()
     .setAppName("spark_clustering")
     .set("spark.driver.memory", "8g")
-    .set("spark.executor.cores", "4")
     .set("spark.driver.maxResultSize", "4g")
     .set("spark.executor.memory", "8g")
 )
 
 spark = SparkSession.builder.config(conf=spark_config).getOrCreate()
 alpha = 10**-6
-### read input
-# read input file
+
+### Read input
+# Read input file
 pd_input_df = pd.read_csv(input_file_path, sep="\t", names=["user-item", "rating-time"])
 pd_input_df[["user", "item"]] = pd_input_df["user-item"].str.split(";", expand=True)
 pd_input_df[["rating", "time"]] = pd_input_df["rating-time"].str.split(";", expand=True)
 pd_input_df = pd_input_df.drop(["user-item", "rating-time"], axis=1)
 pd_input_df["rating"] = pd_input_df["rating"].astype(float)
 
-# read item file
-pd_item_df = pd.read_csv(item_file_path, sep="\t", names=["item", "categories"]).astype(
-    str
-)
-spark_item_df = spark.createDataFrame(pd_item_df).drop("categories")
-
-# transfer from pandas to spark DataFrame
+# Transfer from pandas to spark DataFrame
 spark_input_df = (
     spark.createDataFrame(pd_input_df)
     .withColumn("item", col("item").cast("integer"))
-    .withColumn("time", col("time").cast("double"))
-    .orderBy(["user", "item"])
+    .withColumn("time", col("time").cast("integer"))
 )
 
 temp_df = (
     spark_input_df.withColumn("item-rating-time", array("item", "rating", "time"))
     .groupBy("user")
     .agg(collect_list("item-rating-time").alias("items_ratings_times"))
-    .orderBy("user")
 )
 
 average_df = (
-    spark_input_df.drop("item", "time").groupBy("user").mean("rating").orderBy("user")
+    spark_input_df.drop("item", "time")
+    .groupBy("user")
+    .agg(spark_mean("rating").alias("avg_rating"))
 )
+temp_df = temp_df.join(average_df, on="user")
 
 temp_df = (
     temp_df.join(
-        temp_df.withColumnRenamed(
-            "items_ratings_times", "items_ratings_times_"
-        ).withColumnRenamed("user", "user_")
+        temp_df.withColumnRenamed("items_ratings_times", "items_ratings_times_")
+        .withColumnRenamed("user", "user_")
+        .withColumnRenamed("avg_rating", "avg_rating_"),
+        how="cross",
     )
     .filter(col("user") != col("user_"))
     .orderBy(["user", "user_"])
 )
 
 
-@pandas_udf(IntegerType())
-def rating_commodity_p_udf(arr1: pd.Series, arr2: pd.Series) -> pd.Series:
-    def calc_rating(ar1, ar2):
-        s = 0
-        index1 = 0
-        index2 = 0
-        len1 = len(ar1)
-        len2 = len(ar2)
-        while True:
-            if len1 == index1 or len2 == index2:
-                break
+@pandas_udf(ArrayType(ArrayType(IntegerType())))
+def create_combinations(s1: pd.Series, s2: pd.Series) -> pd.Series:
+    def create_combination_list(arr1, arr2):
+        df1 = pd.DataFrame(
+            np.vstack(arr1), columns=["item", "rating", "time"], dtype="int"
+        )
+        df2 = pd.DataFrame(
+            np.vstack(arr2), columns=["item", "rating", "time"], dtype="int"
+        )
+        merged_df = df1.merge(df2, on="item", suffixes=("_1", "_2"))
+        return merged_df.drop(columns="item").values.tolist()
 
-            if ar1[index1][0] != ar2[index2][0]:
-                if ar1[index1][0] > ar2[index2][0]:
-                    index2 += 1
-                else:
-                    index1 += 1
-            else:
-                s += 1
-                index1 += 1
-                index2 += 1
-        return int(s)
-
-    return arr1.combine(arr2, lambda x, y: calc_rating(x, y))
+    return s1.combine(s2, create_combination_list)
 
 
 @pandas_udf(IntegerType())
-def rating_usefulness_p_udf(arr1: pd.Series, arr2: pd.Series) -> pd.Series:
-    def calc_rating(ar1, ar2):
-        s = 0
-        index1 = 0
-        index2 = 0
-        len1 = len(ar1)
-        len2 = len(ar2)
-        while True:
-            if len2 == index2:
-                break
-
-            if len1 != index1:
-                if ar1[index1][0] != ar2[index2][0]:
-                    if ar1[index1][0] > ar2[index2][0]:
-                        s += 1
-                        index2 += 1
-                    else:
-                        index1 += 1
-                else:
-                    index1 += 1
-                    index2 += 1
-            else:
-                s += 1
-                index2 += 1
-        return int(s)
-
-    return arr1.combine(arr2, lambda x, y: calc_rating(x, y))
+def calculate_rating_commodity(combinations: pd.Series) -> pd.Series:
+    return combinations.transform(len)
 
 
 @pandas_udf(IntegerType())
-def rating_detail_p_udf(
-    arr1: pd.Series, arr2: pd.Series, avg1: pd.Series, avg2: pd.Series
+def calculate_rating_usefulness(
+    s1: pd.Series, rating_commodities: pd.Series
 ) -> pd.Series:
-    def calc_rating(ar1, ar2, av1, av2):
-        s = 0
-        index1 = 0
-        index2 = 0
-        len1 = len(ar1)
-        len2 = len(ar2)
-        while True:
-            if len1 == index1 or len2 == index2:
-                break
+    return s1.transform(len) - rating_commodities
 
-            if ar1[index1][0] != ar2[index2][0]:
-                if ar1[index1][0] > ar2[index2][0]:
-                    index2 += 1
-                else:
-                    index1 += 1
-            else:
-                if ar1[index1][1] > av1 and ar2[index2][1] > av2:
-                    s += 1
-                if ar1[index1][1] < av1 and ar2[index2][1] < av2:
-                    s += 1
-                index1 += 1
-                index2 += 1
 
-        return int(s)
+@pandas_udf(IntegerType())
+def calculate_rating_details(
+    rating_commodities: pd.Series,
+    combinations: pd.Series,
+    avg_ratings_1: pd.Series,
+    avg_ratings_2: pd.Series,
+) -> pd.Series:
+    def calc_rating(rating_commodity, combination_list, avg_rating_1, avg_rating_2):
+        if rating_commodity == 0:
+            return 0
+
+        df = (
+            pd.DataFrame(
+                np.vstack(combination_list),
+                columns=["rating_1", "time_1", "rating_2", "time_2"],
+            )
+            .drop(columns=["time_1", "time_2"])
+            .assign(avg_rating_1=avg_rating_1, avg_rating_2=avg_rating_2)
+        )
+        filtered_df = df[
+            (
+                (df["rating_1"] > df["avg_rating_1"])
+                & (df["rating_2"] > df["avg_rating_2"])
+            )
+            | (
+                (df["rating_1"] < df["avg_rating_1"])
+                & (df["rating_2"] < df["avg_rating_2"])
+            )
+        ]
+        return filtered_df.index.size
 
     return pd.Series(
-        [calc_rating(x, y, av1, av2) for x, y, av1, av2 in zip(arr1, arr2, avg1, avg2)]
+        [
+            calc_rating(rating_commodity, combination_list, avg_rating_1, avg_rating_2)
+            for rating_commodity, combination_list, avg_rating_1, avg_rating_2 in zip(
+                rating_commodities, combinations, avg_ratings_1, avg_ratings_2
+            )
+        ]
     )
 
 
-@pandas_udf(FloatType())
-def rating_time_p_udf(arr1: pd.Series, arr2: pd.Series) -> pd.Series:
-    def calc_rating(ar1, ar2):
-        s = 0
-        index1 = 0
-        index2 = 0
-        len1 = len(ar1)
-        len2 = len(ar2)
-        while True:
-            if len1 == index1 or len2 == index2:
-                break
+@pandas_udf(DoubleType())
+def calculate_rating_time(
+    rating_commodities: pd.Series, combinations: pd.Series
+) -> pd.Series:
+    def calc_rating(rating_commodity, combination_list):
+        if rating_commodity == 0:
+            return 0
 
-            if ar1[index1][0] != ar2[index2][0]:
-                if ar1[index1][0] > ar2[index2][0]:
-                    index2 += 1
-                else:
-                    index1 += 1
-            else:
-                s += math.e ** (-alpha * abs(ar1[index1][2] - ar2[index2][2]))
-                index1 += 1
-                index2 += 1
+        df = pd.DataFrame(
+            np.vstack(combination_list),
+            columns=["rating_1", "time_1", "rating_2", "time_2"],
+        ).drop(columns=["rating_1", "rating_2"])
 
-        return float(s)
+        return (math.e ** (-alpha * (df["time_1"] - df["time_2"]).abs())).sum()
 
-    return pd.Series([calc_rating(x, y) for x, y in zip(arr1, arr2)])
+    return rating_commodities.combine(combinations, calc_rating)
 
 
-@pandas_udf(FloatType())
-def mfps_p_udf(
+@pandas_udf(DoubleType())
+def calculate_mfps(
     rCom: pd.Series, rUse: pd.Series, rDet: pd.Series, rTim: pd.Series
 ) -> pd.Series:
     def calc_mfps(rc, ru, rd, rt):
@@ -223,8 +170,7 @@ def mfps_p_udf(
             + (1 / rd if rd != 0 else 1.1)
             + (1 / rt if rt != 0 else 1.1)
         )
-        s = 1 / s
-        return float(s)
+        return 1 / s
 
     return pd.Series(
         [calc_mfps(rc, ru, rd, rt) for rc, ru, rd, rt in zip(rCom, rUse, rDet, rTim)]
@@ -233,45 +179,36 @@ def mfps_p_udf(
 
 ## Rating commodity
 temp_df = temp_df.withColumn(
-    "rc",
-    rating_commodity_p_udf(col("items_ratings_times"), col("items_ratings_times_")),
-)
+    "combinations",
+    create_combinations(col("items_ratings_times"), col("items_ratings_times_")),
+).withColumn("rc", calculate_rating_commodity(col("combinations")))
+print("Calculated rating commodity")
 
 ## Rating usefulness
 temp_df = temp_df.withColumn(
-    "ru",
-    rating_usefulness_p_udf(col("items_ratings_times"), col("items_ratings_times_")),
+    "ru", calculate_rating_usefulness(col("items_ratings_times_"), col("rc"))
 )
+print("Calculated rating usefulness")
 
-## Rating detail
-temp_df = (
-    temp_df.join(average_df, on="user")
-    .join(
-        average_df.withColumnRenamed("user", "user_").withColumnRenamed(
-            "avg(rating)", "avg_"
-        ),
-        on="user_",
-    )
-    .withColumn(
-        "rd",
-        rating_detail_p_udf(
-            col("items_ratings_times"),
-            col("items_ratings_times_"),
-            col("avg(rating)"),
-            col("avg_"),
-        ),
-    )
+## Rating details
+temp_df = temp_df.withColumn(
+    "rd",
+    calculate_rating_details(
+        col("rc"), col("combinations"), col("avg_rating"), col("avg_rating_")
+    ),
 )
+print("Calculated rating details")
 
 ## Rating time
 temp_df = temp_df.withColumn(
-    "rt",
-    rating_time_p_udf(col("items_ratings_times"), col("items_ratings_times_")),
-)
+    "rt", calculate_rating_time(col("rc"), col("combinations"))
+).drop("items_ratings_times", "items_ratings_times_", "avg_rating", "avg_rating_")
+print("Calculated rating time")
 
 ## MFPS
 temp_df = temp_df.withColumn(
-    "mfps", mfps_p_udf(col("rc"), col("ru"), col("rd"), col("rt"))
+    "mfps", calculate_mfps(col("rc"), col("ru"), col("rd"), col("rt"))
 )
+print("Calculated MFPS")
 
 temp_df.select(["user", "user_", "rc", "ru", "rd", "rt", "mfps"]).show()

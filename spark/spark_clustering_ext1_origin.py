@@ -208,12 +208,11 @@ def run_spark_clustering(
     top_chi2_user_ratings_df.unpersist()
 
     ## KMeans
+    i = 1
     while True:
-        print("Start loop")
-        # print("Centroids")
-        # centroid_ratings_df.show()
-        # print("Matrix")
-        # user_ratings_df.show()
+        print(f"Start loop {i}")
+        print("Centroids")
+        print("Matrix")
 
         # Calculate distances between each user to all centroids
         distances_df = user_ratings_df.drop("centroid").crossJoin(
@@ -271,13 +270,15 @@ def run_spark_clustering(
             centroid_ratings_df.unpersist()
             print("Converged\n")
             break
-        print("End loop\n")
 
-    # print("Final matrix")
-    # user_ratings_df.show()
+        print(f"End loop {i}\n")
+        i = i + 1
+
+    print("Final matrix")
+    user_ratings_df.show()
 
     ## Save matrix
-    user_ratings_df.write.format("parquet").mode("overwrite").save(output_path)
+    # user_ratings_df.write.format("parquet").mode("overwrite").save(output_path)
 
 
 if __name__ == "__main__":
@@ -292,7 +293,7 @@ if __name__ == "__main__":
     # Start timer
     start_time = time.perf_counter()
 
-    run_spark_clustering(input_file_path, item_file_path, output_path, multiplier=10)
+    run_spark_clustering(input_file_path, item_file_path, output_path, multiplier=1)
 
     # End timer
     end_time = time.perf_counter()
