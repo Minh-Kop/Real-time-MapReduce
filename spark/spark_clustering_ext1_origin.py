@@ -34,8 +34,12 @@ def run_spark_clustering(
     spark = (
         SparkSession.builder.appName("Clustering proposal 2 extension 1")
         # .config("spark.hadoop.fs.defaultFS", "file:///")
-        .config("spark.driver.memory", "10g")
+        .config("spark.driver.memory", "12g")
         .config("spark.sql.shuffle.partitions", 8)
+        .config("spark.memory.storageFraction", 0.1)
+        .config("spark.driver.memoryOverheadFactor", 0.3)
+        # .config("spark.sql.files.maxPartitionBytes", "230kb")
+        # .config("spark.master", "local[1]")
         .config("spark.sql.execution.arrow.pyspark.enabled", "true")
         .getOrCreate()
     )
@@ -148,8 +152,7 @@ def run_spark_clustering(
         .join(user_ratings_df, on="user")
     )
     print("Get k*a user with highest chi2")
-    top_chi2_user_ratings_df.persist()
-    top_chi2_user_ratings_df.show()
+    top_chi2_user_ratings_df.persist().count()
 
     # Free storage
     items_df.unpersist()
@@ -203,8 +206,7 @@ def run_spark_clustering(
         new_centroid_ratings_df = next_centroid_df.union(
             centroid_ratings_df
         ).distinct()  #### Problem here
-        new_centroid_ratings_df.persist()
-        new_centroid_ratings_df.show()
+        new_centroid_ratings_df.persist().count()
 
         centroid_ratings_df.unpersist()
         centroid_ratings_df = new_centroid_ratings_df
@@ -245,8 +247,7 @@ def run_spark_clustering(
             "rank == 1"
         )
         print("Users with new centroids")
-        new_user_ratings_df.persist()
-        new_user_ratings_df.show()
+        new_user_ratings_df.persist().count()
 
         user_ratings_df.unpersist()
         user_ratings_df = new_user_ratings_df
@@ -290,10 +291,10 @@ def run_spark_clustering(
 
 
 if __name__ == "__main__":
-    # input_file_path = "input/input_file.txt"
-    # item_file_path = "input/items.txt"
-    input_file_path = "spark/input/input_file_copy.txt"
-    item_file_path = "spark/input/items_copy.txt"
+    input_file_path = "spark/input/input_file.txt"
+    item_file_path = "spark/input/items.txt"
+    # input_file_path = "spark/input/input_file_copy.txt"
+    # item_file_path = "spark/input/items_copy.txt"
     label_output_path = "spark/output/labels"
     centroid_output_path = "spark/output/centroids"
 

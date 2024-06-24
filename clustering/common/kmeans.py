@@ -52,7 +52,7 @@ def kmeans(i, clustering_folder, centroids):
         updated_centroids_tuples = tuple(updated_centroids_tuples)
         centroids_tuples = tuple(centroids_tuples)
         if set(updated_centroids_tuples) == set(centroids_tuples):
-            print("Converged\n")
+            print("\nConverged\n")
             break
 
         centroids = updated_centroids
