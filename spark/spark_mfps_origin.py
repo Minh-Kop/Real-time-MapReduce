@@ -83,7 +83,7 @@ def run_mfps(input_file_path, output_path, alpha=10**-6):
         .orderBy(["user", "user_"])
     )
 
-    ## Calculate sim MFPS 
+    ## Calculate sim MFPS
     # Define UDF
     @pandas_udf(ArrayType(ArrayType(IntegerType())))
     def create_combinations(s1: pd.Series, s2: pd.Series) -> pd.Series:
@@ -222,17 +222,15 @@ def run_mfps(input_file_path, output_path, alpha=10**-6):
     # MFPS
     temp_df = temp_df.withColumn(
         "mfps", calculate_mfps(col("rc"), col("ru"), col("rd"), col("rt"))
-    )
+    ).select("user", "user_", "mfps")
     print("Calculated MFPS")
-    # temp_df.select("user", "user_", "rc", "ru", "rd", "rt", "mfps").show()
 
     ## Save to file
-    temp_df.select("user", "user_", "mfps").write.mode("append").save(output_path)
-
+    temp_df.write.mode("append").save(output_path)
 
 if __name__ == "__main__":
-    input_file_path = "input/input_file.txt"
-    # input_file_path = "input/input_file_copy.txt"
+    # input_file_path = "input/input_file.txt"
+    input_file_path = "input/input_file_copy.txt"
     output_path = "output/mfps_"
 
     import time
