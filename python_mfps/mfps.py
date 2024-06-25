@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
 import math
+import time
 
+start = time.time()
 alpha = 10**-6
 
-data_df = pd.read_csv("./input/input_file_copy.txt", sep="\t", names=["key", "value"])
+data_df = pd.read_csv("./input/input_file.txt", sep="\t", names=["key", "value"])
 data_df[["user", "item"]] = data_df["key"].str.split(";", expand=True)
 data_df[["rating", "time"]] = data_df["value"].str.split(";", expand=True)
 
@@ -134,5 +136,9 @@ join_data_df.drop(
 join_data_df["mfps"] = join_data_df.apply(
     lambda row: mfps(row["rc"], row["ru"], row["rd"], row["rt"]), axis=1
 )
+end = time.time()
+join_data_df.to_csv("./python_mfps/ans.csv")
 
 print(join_data_df)
+
+print(f"Runtime: {end - start}")
