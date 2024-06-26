@@ -8,7 +8,6 @@ class ChiSquare(MRJob):
 
     def calculate_Chi2_mapper(self, _, line):
         key, value = line.strip().split("\t")
-
         yield key, value
 
     def calculate_Chi2_reducer(self, user_label, values):

@@ -1,5 +1,4 @@
 from mrjob.job import MRJob
-from mrjob.step import MRStep
 from mrjob.protocol import TextProtocol
 import numpy as np
 
@@ -7,9 +6,14 @@ import numpy as np
 class UserItemMatrix(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
-    def create_user_item_matrix_mapper(self, _, line):
+    def configure_args(self):
+        super(UserItemMatrix, self).configure_args()
+        self.add_file_arg("--items-path", help="Path to the items file")
+
+    def mapper(self, _, line):
         key, value = line.strip().split("\t")
         key = key.strip().split(";")
+
         if len(key) == 1:
             value = value.strip().split("|")
             if len(value) == 1:
@@ -19,14 +23,10 @@ class UserItemMatrix(MRJob):
                 if flag == "a":
                     yield key[0], avg_rating
             return
+
         user, item = key
         rating = value.strip().split(";")[0]
-
         yield user, f"{item};{rating}"
-
-    def configure_args(self):
-        super(UserItemMatrix, self).configure_args()
-        self.add_file_arg("--items-path", help="Path to the items file")
 
     def create_item_list(self, filename):
         items = []
@@ -36,11 +36,11 @@ class UserItemMatrix(MRJob):
                 items.append(float(item))
         return items
 
-    def create_user_item_matrix_reducer_init(self):
+    def reducer_init(self):
         items_path = self.options.items_path
         self.items = self.create_item_list(items_path)
 
-    def create_user_item_matrix_reducer(self, user, values):
+    def reducer(self, user, values):
         values = [value.strip().split(";") for value in values]
         values = np.array(values, dtype="object")
         # Find rows with length 1
@@ -66,15 +66,6 @@ class UserItemMatrix(MRJob):
                 result.append(f"{item};{avg_rating}")
         result = "|".join(result)
         yield user, result
-
-    def steps(self):
-        return [
-            MRStep(
-                mapper=self.create_user_item_matrix_mapper,
-                reducer_init=self.create_user_item_matrix_reducer_init,
-                reducer=self.create_user_item_matrix_reducer,
-            )
-        ]
 
 
 if __name__ == "__main__":
