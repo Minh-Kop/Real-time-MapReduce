@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.abspath("./util"))
 
-from custom_util import env_dict, run_mr_job_hadoop
+from custom_util import env_dict, run_mr_job_hadoop, write_data_to_file
 from .count_item import CountItem
 from .intersection import Intersection
 from .jaccard import Jaccard
@@ -11,24 +11,24 @@ from .jaccard import Jaccard
 HADOOP_PATH = env_dict["hadoop_path"]
 
 
-def run_jaccard(input_file_path):
-    print("Calculate CountItem")
+def run_jaccard(input_file_path, output_file_path=None):
+    # Calculate CountItem
     run_mr_job_hadoop(
         CountItem,
         [input_file_path],
         f"{HADOOP_PATH}/jaccard-output/count_item",
     )
-    print("CountItem successful")
+    print("Calculated CountItem")
 
-    print("Intersection CountItem")
+    # Intersect CountItem
     run_mr_job_hadoop(
         Intersection,
         [input_file_path],
         f"{HADOOP_PATH}/jaccard-output/intersection",
     )
-    print("Intersection successful")
+    print("Intersected CountItem")
 
-    print("Calculate Jaccard")
+    # Calculate Jaccard
     return_values = run_mr_job_hadoop(
         Jaccard,
         [
@@ -37,6 +37,6 @@ def run_jaccard(input_file_path):
         ],
         f"{HADOOP_PATH}/jaccard-output/jaccard",
     )
-    print("Jaccard successful")
-
-    return return_values
+    if output_file_path:
+        write_data_to_file(output_file_path, return_values)
+    print("Calculated Jaccard")
