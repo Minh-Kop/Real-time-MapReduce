@@ -12,35 +12,6 @@ alpha = 10**-6  # to calculate rating time
 nCluster = 3  # to calculate top user for clustering
 
 
-def kmeans_assign_labels(data_arr, centers):
-    D = cdist(data_arr, centers)
-    return np.argmin(D, axis=1)
-
-
-def kmeans_update_centers(data_arr, labels, n_cluster):
-    centers = np.zeros((n_cluster, data_arr.shape[1]))
-    for i in range(n_cluster):
-        data_arri = data_arr[labels == i, :]
-        centers[i, :] = np.mean(data_arri, axis=0)
-    return centers
-
-
-def has_converged(centers, new_centers):
-    return set([tuple(a) for a in centers]) == set([tuple(a) for a in new_centers])
-
-
-def kmeans(data_arr, n_cluster, initial_centers):
-    centers, labels, times = initial_centers, [], 0
-    while True:
-        labels = kmeans_assign_labels(data_arr, centers)
-        new_centers = kmeans_update_centers(data_arr, labels, n_cluster)
-        if has_converged(centers, new_centers):
-            break
-        centers = new_centers
-        times += 1
-    return (centers, labels, times)
-
-
 # function for calculating mfps and its component
 def create_combinations(arr1, arr2):
     df1 = pd.DataFrame(
