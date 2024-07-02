@@ -20,9 +20,46 @@ if __name__ == "__main__":
     data_df.sort_values(by=["user", "item"], inplace=True)
     item_df = pd.read_csv("./input/items.txt", sep="\t", names=["item", "categories"])
 
+    # test clustering
+    # class probability
+    item_class_df = item_df.groupby("categories").count().reset_index()
+    item_class_df["prob"] = item_class_df["item"] / len(item_class_df)
+
+    # user's average rating
+    avg_df = data_df.groupby("user")["rating"].mean().reset_index()
+
+    # user's sum rating
+    user_item_rated = data_df.groupby("user")["item"].count().reset_index()
+    sum_df = data_df.groupby("user")["rating"].sum().reset_index()
+    users_df = sum_df.merge(avg_df, on="user", suffixes=("_s", "_a")).merge(
+        user_item_rated, on="user"
+    )
+    users_df["sum"] = users_df["rating_s"] + users_df["rating_a"] * users_df["item"]
+    users_df.drop(["rating_s", "item"], axis=1, inplace=True)
+    users_df = users_df.rename(columns={"rating_a": "avg"})
+
+    # user's E
+    users_df = users_df.merge(item_class_df, how="cross")
+    users_df["Eij"] = users_df["sum"] * users_df["prob"]
+
+    # user's O
+    average = data_df.groupby("user")["rating"].mean()
+    user = data_df["user"].unique()
+
+    O_df = item_df.merge(data_df.unique("user"), how="cross")
+    O_df = O_df.rename(columns={"0": "user"})
+
+    O_df = O_df.merge(
+        pd.DataFrame(user, columns=["user"]), on=["user", "item"], how="left"
+    )
+
+    O_df = O_df.groupby(["user", "category"])["rating"].sum()
+
+    print(O_df)
+
     # run clustering
-    user_df = run_clustering(data_df, item_df, nCluster, multiplier)
-    centroid_list = user_df["centroid"].unique().tolist()
+    # user_df = run_clustering(data_df, item_df, nCluster, multiplier)
+    # centroid_list = user_df["centroid"].unique().tolist()
 
     # # run mfps
     # for i in range(nCluster):
