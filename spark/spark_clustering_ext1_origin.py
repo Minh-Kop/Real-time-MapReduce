@@ -166,6 +166,7 @@ def run_spark_clustering(
 
     ## Get all remaining clusters
     for i in range(number_of_clusters - 1):
+        print(f"\nLoop centroid {i}")
         # Get the new centroid's user
         current_centroid_df = centroid_ratings_df.limit(1)
         print("Get the new centroid")
@@ -219,7 +220,7 @@ def run_spark_clustering(
     ## KMeans
     i = 1
     while True:
-        print(f"Start loop {i}")
+        print(f"\nLoop KMeans {i}")
         print("Centroids")
         print("Matrix")
 
@@ -275,10 +276,9 @@ def run_spark_clustering(
         centroid_ratings_df = new_centroid_ratings_df
 
         if number_of_converged_centroids == number_of_clusters:
-            print("Converged\n")
+            print("\nConverged\n")
             break
 
-        print(f"End loop {i}\n")
         i = i + 1
 
     print("Final matrix")

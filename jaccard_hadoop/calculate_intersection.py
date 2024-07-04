@@ -2,11 +2,11 @@ from mrjob.job import MRJob
 from mrjob.protocol import TextProtocol
 
 
-class RatingCommodity(MRJob):
+class CalculateIntersection(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def configure_args(self):
-        super(RatingCommodity, self).configure_args()
+        super(CalculateIntersection, self).configure_args()
         self.add_file_arg("--users-path", help="Path to the users file")
 
     def create_user_list(self, filename):
@@ -34,9 +34,10 @@ class RatingCommodity(MRJob):
     def reducer(self, users, items):
         items = list(items)
         unique_items = set(items)
+        number_of_intersected_items = len(items) - len(unique_items)
 
-        yield users, f"{len(items) - len(unique_items)};rc"
+        yield users, str(number_of_intersected_items)
 
 
 if __name__ == "__main__":
-    RatingCommodity().run()
+    CalculateIntersection().run()
