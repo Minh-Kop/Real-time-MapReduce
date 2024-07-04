@@ -82,22 +82,23 @@ if __name__ == "__main__":
 
     # run clustering
     user_df = run_clustering(data_df, item_df, nCluster, multiplier)
+    user_df.to_csv("./python_mfps/output/labeling.csv", index=False)
     centroid_list = user_df["centroid"].unique().tolist()
 
     # run mfps
-    for i in range(nCluster):
-        print(f"MFPS loop: {i + 1}")
-        mfps_data_df = user_df[user_df["centroid"] == centroid_list[i]]
+    # for i in range(nCluster):
+    #     print(f"MFPS loop: {i + 1}")
+    #     mfps_data_df = user_df[user_df["centroid"] == centroid_list[i]]
 
-        with open(f"./python_mfps/output/cluster{i + 1}", "w") as file:
-            for user in mfps_data_df["user"].tolist():
-                file.write(f"{user}\n")
+    #     with open(f"./python_mfps/output/cluster{i + 1}", "w") as file:
+    #         for user in mfps_data_df["user"].tolist():
+    #             file.write(f"{user}\n")
 
-        mfps_data_df = mfps_data_df.merge(data_df, on="user")
-        mfps_data_df.drop("centroid", axis=1, inplace=True)
+    #     mfps_data_df = mfps_data_df.merge(data_df, on="user")
+    #     mfps_data_df.drop("centroid", axis=1, inplace=True)
 
-        mfps_result = run_mfps(mfps_data_df)
-        mfps_result.to_csv(f"./python_mfps/output/ans{i + 1}.csv")
+    #     mfps_result = run_mfps(mfps_data_df)
+    #     mfps_result.to_csv(f"./python_mfps/output/ans{i + 1}.csv")
 
     end = time.time()
     print(f"Runtime: {end - start}")

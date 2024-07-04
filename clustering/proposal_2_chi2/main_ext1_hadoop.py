@@ -29,7 +29,7 @@ def run_clustering_chi2_ext1(
     input_file_path,
     item_file_path,
     hdfs_item_file_path,
-    number_of_clusters=2,
+    number_of_clusters=3,
     number_of_multiplications=1,
 ):
     # Number of items
@@ -67,6 +67,7 @@ def run_clustering_chi2_ext1(
             hdfs_item_file_path,
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
+        True,
     )
     print("Create user-item matrix")
 
@@ -88,6 +89,7 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
+        True,
     )
     print("Calculate expected value")
 
@@ -99,6 +101,7 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
+        True,
     )
     print("Calculate observed value")
 
@@ -110,6 +113,7 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
+        True,
     )
     print("Calculate Chi2")
 
@@ -124,6 +128,7 @@ def run_clustering_chi2_ext1(
             str(0),
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
+        True,
     )
     print("Get top Chi2")
 
@@ -135,11 +140,32 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+        True,
     )
-    print("Create first centroids")
+    print("Create top M centroids")
 
     # Get max centroid
-    max_centroid = centroids[0].replace("\n", "").split("\t")
+    run_mr_job_hadoop(
+        GetMax,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/top-chi2-centroid-id",
+        True,
+    )
+
+    max_centroid = (
+        run_mr_job_hadoop(
+            CreateCentroids,
+            [
+                f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+                f"{HADOOP_PATH}/clustering-chi2-output/top-chi2-centroid-id",
+            ],
+        )[0]
+        .replace("\n", "")
+        .split("\t")
+    )
+    print("Get highest centroid")
 
     # Remove current centroid
     run_mr_job_hadoop(
@@ -150,6 +176,7 @@ def run_clustering_chi2_ext1(
             max_centroid[0],
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
+        True,
     )
     print("Remove centroid")
 
