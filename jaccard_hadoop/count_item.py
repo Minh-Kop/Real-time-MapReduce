@@ -6,10 +6,10 @@ class CountItem(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def mapper(self, _, line):
-        key, value = line.strip().split("\t")
+        key, _ = line.strip().split("\t")
         user, item = key.strip().split(";")
 
-        yield user, f"{item};{value}"
+        yield user, item
 
     def reducer(self, user, group):
         group = list(group)
