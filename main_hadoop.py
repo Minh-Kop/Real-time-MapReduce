@@ -19,7 +19,7 @@ from clustering import run_clustering_proposal_2_chi2
 
 HADOOP_PATH = env_dict["hadoop_path"]
 NUMBER_OF_CLUSTERS = 3
-MULTIPLIER = 2
+MULTIPLIER = 10
 
 
 def create_input_file(input_path, output_path):
@@ -134,26 +134,26 @@ if __name__ == "__main__":
     )
 
     ## Split input file
-    split_files_by_label(input_file_path, num=num)
+    # split_files_by_label(input_file_path, num=num)
 
-    ## Calculate MFPS
-    mfps_result = []
-    for index in range(NUMBER_OF_CLUSTERS):
-        print(f"\nLoop {index}")
-        input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
-        avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
-        output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
+    # ## Calculate MFPS
+    # mfps_result = []
+    # for index in range(NUMBER_OF_CLUSTERS):
+    #     print(f"\nLoop {index}")
+    #     input_path = f"{HADOOP_PATH}/input/input-file-{index}.txt"
+    #     avg_ratings_path = f"{HADOOP_PATH}/input/avg-ratings-{index}.txt"
+    #     output_path = f"{HADOOP_PATH}/mfps-output/mfps-{index}"
 
-        result_data = run_mfps(
-            input_path=input_path,
-            avg_ratings_path=avg_ratings_path,
-            output_path=output_path,
-        )
-        mfps_result.append(result_data)
-    mfps_result = [line for row in mfps_result for line in row]
+    #     result_data = run_mfps(
+    #         input_path=input_path,
+    #         avg_ratings_path=avg_ratings_path,
+    #         output_path=output_path,
+    #     )
+    #     mfps_result.append(result_data)
+    # mfps_result = [line for row in mfps_result for line in row]
 
-    output_path = f"./hadoop_output/mfps.txt"
-    write_data_to_file(output_path, mfps_result)
+    # output_path = f"./hadoop_output/mfps.txt"
+    # write_data_to_file(output_path, mfps_result)
 
     ## End timer
     end_time = time.perf_counter()

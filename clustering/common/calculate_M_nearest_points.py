@@ -33,7 +33,9 @@ class MNearestPoints(MRJob):
         yield None, f"{user};{distance}"
 
     def get_M_nearest_points(self, users_distances):
-        users_distances = [line.strip().split(";") for line in users_distances]
+        users_distances = [
+            np.fromstring(line, sep=";", dtype=float) for line in users_distances
+        ]
         users_distances = np.array(users_distances)
 
         # Get the indices that would sort the array based on the second column
@@ -60,12 +62,13 @@ class MNearestPoints(MRJob):
     def reducer(self, _, users_distances):
         nearest_points = self.get_M_nearest_points(users_distances)
         for user, distance in nearest_points:
-            yield f"{user}", f"{distance}"
+            yield f"{int(user)}", f"{distance}"
 
 
 if __name__ == "__main__":
-    # import sys
-    # M = 3
+    import sys
+
+    # M = 2
     # sys.argv[1:] = [
     #     "./clustering/proposal_1/output/D.txt",
     #     "--M",
