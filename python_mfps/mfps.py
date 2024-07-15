@@ -86,6 +86,7 @@ def mfps(rc, ru, rd, rt):
 
 def run_mfps(data_df):
     avg_df = data_df.groupby("user")["rating"].mean()
+    full_data_df = None
 
     data_df["item_rating_time"] = data_df.apply(
         lambda row: [row["item"], row["rating"], row["time"]], axis=1
@@ -93,48 +94,63 @@ def run_mfps(data_df):
     data_df.drop(["item", "rating", "time"], axis=1, inplace=True)
     data_df = data_df.groupby("user")["item_rating_time"].apply(list).reset_index()
 
-    join_data_df = data_df.merge(data_df, how="cross", suffixes=("", "_"))
-    join_data_df = join_data_df[join_data_df["user"] != join_data_df["user_"]]
+    ## 1 user per time
+    ## get user list
+    user_list = data_df["user"].unique()
+    for i in user_list:
+        join_data_df = data_df[data_df["user"] == i].merge(
+            data_df, how="cross", suffixes=("", "_")
+        )
 
-    join_data_df["combination"] = join_data_df.apply(
-        lambda row: create_combinations(
-            row["item_rating_time"], row["item_rating_time_"]
-        ),
-        axis=1,
-    )
+        join_data_df = join_data_df[join_data_df["user"] != join_data_df["user_"]]
 
-    join_data_df["rc"] = join_data_df.apply(
-        lambda row: rating_commodity(row["combination"]), axis=1
-    )
+        join_data_df["combination"] = join_data_df.apply(
+            lambda row: create_combinations(
+                row["item_rating_time"], row["item_rating_time_"]
+            ),
+            axis=1,
+        )
 
-    join_data_df["ru"] = join_data_df.apply(
-        lambda row: rating_usefulness(row["item_rating_time_"], row["rc"]), axis=1
-    )
+        join_data_df["rc"] = join_data_df.apply(
+            lambda row: rating_commodity(row["combination"]), axis=1
+        )
 
-    join_data_df = join_data_df.merge(avg_df, on="user")
-    join_data_df = join_data_df.merge(
-        avg_df, left_on="user_", right_on="user", suffixes=("", "_")
-    )
+        join_data_df["ru"] = join_data_df.apply(
+            lambda row: rating_usefulness(row["item_rating_time_"], row["rc"]), axis=1
+        )
 
-    join_data_df["rd"] = join_data_df.apply(
-        lambda row: rating_detail(row["combination"], row["rating"], row["rating_"]),
-        axis=1,
-    )
+        join_data_df = join_data_df.merge(avg_df, on="user")
+        join_data_df = join_data_df.merge(
+            avg_df, left_on="user_", right_on="user", suffixes=("", "_")
+        )
 
-    join_data_df.drop(["rating", "rating_"], axis=1, inplace=True)
+        join_data_df["rd"] = join_data_df.apply(
+            lambda row: rating_detail(
+                row["combination"], row["rating"], row["rating_"]
+            ),
+            axis=1,
+        )
 
-    join_data_df["rt"] = join_data_df.apply(
-        lambda row: rating_time(row["combination"]), axis=1
-    )
+        join_data_df.drop(["rating", "rating_"], axis=1, inplace=True)
 
-    join_data_df.drop(
-        ["item_rating_time", "item_rating_time_", "combination"], axis=1, inplace=True
-    )
+        join_data_df["rt"] = join_data_df.apply(
+            lambda row: rating_time(row["combination"]), axis=1
+        )
 
-    join_data_df["mfps"] = join_data_df.apply(
-        lambda row: mfps(row["rc"], row["ru"], row["rd"], row["rt"]), axis=1
-    )
-    # join_data_df.to_csv("./python_mfps/ans.csv")
-    print(join_data_df)
+        join_data_df.drop(
+            ["item_rating_time", "item_rating_time_", "combination"],
+            axis=1,
+            inplace=True,
+        )
 
-    return join_data_df
+        join_data_df["mfps"] = join_data_df.apply(
+            lambda row: mfps(row["rc"], row["ru"], row["rd"], row["rt"]), axis=1
+        )
+
+        # join_data_df.to_csv(f"./python_mfps/sim-{i}.csv")
+        full_data_df = pd.concat(
+            [full_data_df, join_data_df], ignore_index=True, axis=0
+        )
+        # print(f"MFPS: User-{i} successfully")
+
+    return full_data_df
