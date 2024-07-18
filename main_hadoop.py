@@ -106,11 +106,11 @@ def split_files_by_label(input_file_path, num):
 
 
 if __name__ == "__main__":
-    source_file_path = "./input/u.data"
-    # input_file_path = "./input/input_file.txt"
-    # item_file_path = "input/items.txt"
-    input_file_path = "./input/input_file_test.txt"
-    item_file_path = "input/items_test.txt"
+    # source_file_path = "./input/u.data"
+    input_file_path = "./input/input_file.txt"
+    item_file_path = "input/items.txt"
+    # input_file_path = "./input/input_file_test.txt"
+    # item_file_path = "input/items_test.txt"
     hdfs_input_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(input_file_path)}"
     hdfs_item_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(item_file_path)}"
 
