@@ -1,0 +1,78 @@
+python3 calculate_avg_rating.py -r hadoop hdfs://localhost:9000/user/mackop/input_file_copy.txt --output-dir /user/mackop/avg --output-dir /user/mackop/avg1
+python3 create_user_item_matrix.py -r hadoop ../input/input_file_copy.txt ./output/avg_ratings.txt --items-path ../input/items.txt
+python3 create_user_item_matrix.py -r hadoop hdfs://localhost:9000/user/mackop/input_file_copy.txt hdfs://localhost:9000/user/mackop/avg --items-path ../input/items.txt --output-dir /user/mackop/matrix
+
+python3 calculate_scaling.py -r hadoop hdfs://localhost:9000/user/mackop/clustering-output/F-0 --max-value '6.0'
+
+'['/home/mackop/hadoop-3.3.6/bin/hadoop', 
+'jar', '/home/mackop/hadoop-3.3.6/share/hadoop/tools/lib/hadoop-streaming-3.3.6.jar', 
+'-files', 'hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/wd/create_user_item_matrix.py#create_user_item_matrix.py,hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/wd/items.txt#items.txt,hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/wd/mrjob.zip#mrjob.zip,hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/wd/setup-wrapper.sh#setup-wrapper.sh', 
+'-input', 'hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/input_file_copy.txt', 
+'-input', 'hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/files/avg_ratings.txt', 
+'-output', 'hdfs:///user/mackop/tmp/mrjob/create_user_item_matrix.mackop.20240328.135901.991160/output', 
+'-mapper', '/bin/sh -ex setup-wrapper.sh python3 create_user_item_matrix.py --step-num=0 --mapper --items-path items.txt', 
+'-reducer', '/bin/sh -ex setup-wrapper.sh python3 create_user_item_matrix.py --step-num=0 --reducer --items-path items.txt']' 
+
+        
+python3 rating_usefulness.py -r hadoop hdfs://localhost:9000/user/mackop/input_file_copy.txt --rating-commodity-path hdfs://localhost:9000/user/mackop/output/rating-commodity
+
+hadoop jar /home/mackop/code/test/target/test-1.0-SNAPSHOT.jar MaxTemperature input/ncdc/sample.txt /output
+hadoop jar target/test-1.0-SNAPSHOT.jar MaxTemperature /input/ncdc/sample.txt /output
+hadoop MaxTemperature /input/ncdc/sample.txt /output
+
+hadoop jar ch03-hdfs/target/ch03-hdfs-1.0.jar URLCat hdfs://localhost:9000/input/docs/quangle.txt
+hadoop jar ch03-hdfs/target/ch03-hdfs-1.0.jar FileSystemCat hdfs://localhost:9000/input/docs/quangle.txt
+hadoop jar ch03-hdfs/target/ch03-hdfs-1.0.jar FileCopyWithProgress input/docs/1400-8.txt hdfs://localhost:9000
+hadoop jar ch03-hdfs/target/ch03-hdfs-1.0.jar FileCopyWithProgress input/docs/1400-8.txt hdfs://localhost:9000/1400-8.txt
+hadoop jar ch03-hdfs/target/ch03-hdfs-1.0.jar ListStatus /
+
+hadoop jar ch05-io/target/ch05-io-1.0.0.jar MaxTemperatureWithCompression /input/ncdc/sample.txt.gz /output
+hadoop jar ch05-io/target/ch05-io-1.0.0-jar-with-dependencies.jar MaxTemperatureWithCompression /input/ncdc/sample.txt.gz /output
+hadoop jar ch05-io/target/ch05-io-1.0.0-jar-with-dependencies.jar MaxTemperatureWithMapOutputCompression /input/ncdc/sample.txt.gz /output
+
+echo "Text" | hadoop jar ch05-io/target/ch05-io-1.0.0-jar-with-dependencies.jar StreamCompressor org.apache.hadoop.io.compress.GzipCodec | gunzip -
+
+hadoop jar ch05-io/target/ch05-io-1.0.0-jar-with-dependencies.jar SequenceFileWriteDemo /numbers.seq
+hadoop jar ch05-io/target/ch05-io-1.0.0-jar-with-dependencies.jar SequenceFileReadDemo /numbers.seq
+
+hadoop jar ch06-mr-dev/target/ch06-mr-dev-1.0.0.jar ConfigurationPrinter
+hadoop jar ch06-mr-dev/target/ch06-mr-dev-1.0.0.jar ConfigurationPrinter -D color=red | grep color
+hadoop jar ch06-mr-dev/target/ch06-mr-dev-1.0.0.jar v4.MaxTemperatureDriver /input/ncdc/micro /output
+hadoop v4.MaxTemperatureDriver -conf conf/hadoop-local.xml input/ncdc/micro output1
+hadoop jar ch06-mr-dev/target/ch06-mr-dev-1.0.0.jar LoggingDriver -D mapreduce.map.log.level=DEBUG /input/ncdc/sample.txt /logging-out
+hadoop jar ch06-mr-dev/target/ch06-mr-dev-1.0.0.jar v4.MaxTemperatureDriver -D mapreduce.task.profile=true /input/ncdc/all /max-temp
+
+export HADOOP_CLASSPATH=
+hadoop v1.MinimalMapReduce -conf conf/hadoop-local.xml "input/ncdc/all/190{1,2}.gz" output
+hadoop v1.MinimalMapReduceWithDefaults -conf conf/hadoop-local.xml "input/ncdc/all/190{1,2}.gz" output
+hadoop jar ch08-mr-types/target/ch08-mr-types-1.0.0.jar v1.MinimalMapReduce "/input/ncdc/all/190{1,2}.gz" /output
+hadoop v1.SmallFilesToSequenceFileConverter -conf conf/hadoop-local.xml input/smallfiles output
+hadoop v1.SmallFilesToSequenceFileConverter -conf conf/hadoop-local.xml -D mapreduce.job.reduces=2 input/smallfiles output
+hadoop v1.SmallFilesToSequenceFileConverter -D mapreduce.job.reduces=2 /input/smallfiles /output
+hadoop v1.PartitionByStationUsingMultipleOutputs -D mapreduce.job.reduces=2 "/input/ncdc/all/190{1,2}.gz" /output
+hadoop v1.PartitionByStationYearUsingMultipleOutputs -D mapreduce.job.reduces=2 "/input/ncdc/all/190{1,2}.gz" /output
+
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar MaxTemperatureWithCounters -conf conf/hadoop-local.xml input/ncdc/all output-counters
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar MaxTemperatureWithCounters /input/ncdc/all /output-counters
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar MissingTemperatureFields job_1716637478423_0012
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar SortDataPreprocessor /input/ncdc/all /input/ncdc/all-seq
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar SortByTemperatureUsingHashPartitioner -D mapreduce.job.reduces=30 /input/ncdc/all-seq /output-hashsort
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar SortByTemperatureUsingTotalOrderPartitioner -D mapreduce.job.reduces=30 /input/ncdc/all-seq /output-totalsort
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar MaxTemperatureUsingSecondarySort /input/ncdc/all /output-secondarysort
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar JoinRecordWithStationName /input/ncdc/all /input/ncdc/metadata/stations-fixed-width.txt /output-reduce-join
+hadoop jar ch09-mr-features/target/ch09-mr-features-1.0.0-jar-with-dependencies.jar MaxTemperatureByStationNameUsingDistributedCacheFile -files input/ncdc/metadata/stations-fixed-width.txt /input/ncdc/all /output-distributed
+
+mapred --daemon start historyserver
+mapred --daemon stop historyserver
+
+/usr/local/lib/python3.10/dist-packages 
+
+${project.basedir}
+
+SSH
+ssh hoang@192.168.158.76
+ssh-copy-id hoang@10.123.1.130
+ssh mac@192.168.1.5
+sftp mac@192.168.1.5
+
+hadoop fs -getmerge clustering-chi2-output/avg-ratings merge.txt

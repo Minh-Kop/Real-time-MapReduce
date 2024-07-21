@@ -16,7 +16,7 @@ def write_data_to_file(filename, data, mode="w"):
 
 
 def get_txt_filename(file_path):
-    pattern = "\/([^\/\.]+)(\..*)?$"
+    pattern = "[^\/]\/([^\/\.]+)(\..*)?$"
     match = re.search(pattern, file_path)
     if match:
         name = match.group(1)
