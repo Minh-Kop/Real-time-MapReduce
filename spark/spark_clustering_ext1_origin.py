@@ -34,7 +34,7 @@ def run_spark_clustering(
     spark = (
         SparkSession.builder.appName("Clustering proposal 2 extension 1")
         # .config("spark.hadoop.fs.defaultFS", "file:///")
-        .config("spark.driver.memory", "12g")
+        # .config("spark.driver.memory", "12g")
         .config("spark.sql.shuffle.partitions", 8)
         .config("spark.memory.storageFraction", 0.1)
         .config("spark.driver.memoryOverheadFactor", 0.3)
