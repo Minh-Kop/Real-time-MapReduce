@@ -1,8 +1,6 @@
 import os
 import sys
 
-import pandas as pd
-import numpy as np
 
 sys.path.append(os.path.abspath("./util"))
 sys.path.append(os.path.abspath("./clustering/common"))
@@ -46,7 +44,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
         True,
     )
-    print("Calculate average rating and sum rating of each user")
+    print("Calculated average rating and sum rating of each user")
 
     # Split average ratings to a separate file
     run_mr_job_hadoop(
@@ -55,7 +53,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/avg-ratings",
         True,
     )
-    print("Split average ratings to a separate file")
+    print("Splitted average ratings to a separate file")
 
     # Create user-item matrix
     run_mr_job_hadoop(
@@ -69,7 +67,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         True,
     )
-    print("Create user-item matrix")
+    print("Created user-item matrix")
 
     # Calculate class probability
     run_mr_job_hadoop(
@@ -78,7 +76,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/class-probability",
         True,
     )
-    print("Calculate class probability")
+    print("Calculated class probability")
 
     # Calculate expected value
     run_mr_job_hadoop(
@@ -86,12 +84,12 @@ def run_clustering_chi2_ext1(
         [
             f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
             "--class-probability-path",
-            f"{HADOOP_PATH}/input/class-probability.txt",
+            f"{HADOOP_PATH}/temp-input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
         True,
     )
-    print("Calculate expected value")
+    print("Calculated expected value")
 
     # Calculate observed value
     run_mr_job_hadoop(
@@ -103,7 +101,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
         True,
     )
-    print("Calculate observed value")
+    print("Calculated observed value")
 
     # Calculate chi2
     run_mr_job_hadoop(
@@ -115,7 +113,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
         True,
     )
-    print("Calculate Chi2")
+    print("Calculated Chi2")
 
     # Get max Chi2
     run_mr_job_hadoop(
@@ -130,7 +128,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         True,
     )
-    print("Get top Chi2")
+    print("Got top Chi2")
 
     # Create centroids
     centroids = run_mr_job_hadoop(
@@ -142,7 +140,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/centroids",
         True,
     )
-    print("Create top M centroids")
+    print("Created top M centroids")
 
     # Get max centroid
     run_mr_job_hadoop(
@@ -165,7 +163,7 @@ def run_clustering_chi2_ext1(
         .replace("\n", "")
         .split("\t")
     )
-    print("Get highest centroid")
+    print("Got max centroid")
 
     # Remove current centroid
     run_mr_job_hadoop(
@@ -178,7 +176,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
         True,
     )
-    print("Remove centroid")
+    print("Removed centroid")
 
     # Loop
     for i in range(number_of_clusters - 1):
@@ -194,7 +192,7 @@ def run_clustering_chi2_ext1(
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
         )
-        print("Calculate distance between centroids")
+        print("Calculated distance between centroids")
 
         # Get highest centroid
         run_mr_job_hadoop(
@@ -209,14 +207,14 @@ def run_clustering_chi2_ext1(
             run_mr_job_hadoop(
                 CreateCentroids,
                 [
-                    f"{HADOOP_PATH}/clustering-chi2-output/centroids",
+                    f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i}",
                     f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id-{i}",
                 ],
             )[0]
             .replace("\n", "")
             .split("\t")
         )
-        print("Get highest centroid")
+        print("Got highest centroid")
 
         # Remove highest centroid
         run_mr_job_hadoop(
@@ -228,7 +226,7 @@ def run_clustering_chi2_ext1(
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i + 1}",
         )
-        print("Remove highest centroid")
+        print("Removed highest centroid")
 
     # Filter only centroids
     centroids = run_mr_job_hadoop(
@@ -239,6 +237,7 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/centroids-{number_of_clusters}",
         True,
     )
-    print("Filter only centroids")
+    print("Filtered only centroids")
 
+    # Run Kmeans
     return kmeans(number_of_clusters, "clustering-chi2-output", centroids)

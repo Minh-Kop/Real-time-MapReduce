@@ -32,9 +32,9 @@ class ObservedValue(MRJob):
 
     def calculate_observed_value_reducer(self, label_user, ratings):
         label, user = label_user.strip().split(";")
-        ratings = np.array(list(ratings))
+        ratings = np.array(list(ratings), dtype=float)
 
-        sum_ratings = np.sum(ratings, dtype=float)
+        sum_ratings = np.sum(ratings)
         yield f"{user};{label}", f"{sum_ratings}|o"
 
     def steps(self):
