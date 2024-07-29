@@ -153,8 +153,8 @@ if __name__ == "__main__":
             ),
             "mfps-output",
         )
-
         mfps_result.append(result_data)
+
     mfps_result = [line for row in mfps_result for line in row]
 
     output_path = f"./hadoop_output/mfps.txt"
