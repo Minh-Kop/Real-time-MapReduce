@@ -22,6 +22,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
         CreateCombinations,
         [input_path],
         f"{HADOOP_PATH}/mfps-output/combinations",
+        True,
     )
     print("Created combination")
 
@@ -30,6 +31,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
         CreateUserPairs,
         [avg_ratings_path, "--users-path", avg_ratings_path],
         f"{HADOOP_PATH}/mfps-output/user-pairs",
+        True,
     )
     print("Created user pairs")
 
@@ -54,6 +56,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
             f"{HADOOP_PATH}/temp-input/rating-commodity.txt",
         ],
         f"{HADOOP_PATH}/mfps-output/rating-usefulness",
+        True,
     )
     print("Calculated rating usefulness")
 
@@ -66,6 +69,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
             avg_ratings_path,
         ],
         f"{HADOOP_PATH}/mfps-output/rating-detail",
+        True,
     )
     print("Calculated rating detail")
 
@@ -76,6 +80,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
             f"{HADOOP_PATH}/mfps-output/combinations",
         ],
         f"{HADOOP_PATH}/mfps-output/rating-time",
+        True,
     )
     print("Calculated rating time")
 
@@ -89,6 +94,7 @@ def run_mfps(input_path, avg_ratings_path, output_path):
             f"{HADOOP_PATH}/mfps-output/rating-time",
         ],
         output_path,
+        True,
     )
     print("Calculated MFPS")
 

@@ -70,8 +70,10 @@ mapred --daemon stop historyserver
 ${project.basedir}
 
 SSH
-ssh hoang@192.168.158.76
-ssh-copy-id hoang@10.123.1.130
+ssh mackop@192.168.1.7
+
+ssh-copy-id hoang@10.123.1.130 # Important to login without password
+
 ssh mac@192.168.1.5
 sftp mac@192.168.1.5
 

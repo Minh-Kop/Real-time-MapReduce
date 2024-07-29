@@ -15,6 +15,7 @@ from .calculate_avg_and_sum import AvgAndSum
 from .calculate_class_probability import ClassProbability
 from .calculate_expected_value import ExpectedValue
 from .calculate_observed_value import ObservedValue
+from .remove_items_from_matrix import RemoveItemsFromMatrix
 from .calculate_chi2 import ChiSquare
 from .remove_centroid import RemoveCentroid
 from .calculate_distance_between_centroids import DistanceBetweenCentroids
@@ -55,19 +56,19 @@ def run_clustering_chi2_ext1(
     )
     print("Splitted average ratings to a separate file")
 
-    # Create user-item matrix
+    # Create user-items matrix
     run_mr_job_hadoop(
         UserItemMatrix,
         [
             input_file_path,
-            f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
+            f"{HADOOP_PATH}/clustering-chi2-output/avg-ratings",
             "--items-path",
             hdfs_item_file_path,
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         True,
     )
-    print("Created user-item matrix")
+    print("Created user-items matrix")
 
     # Calculate class probability
     run_mr_job_hadoop(
@@ -86,7 +87,7 @@ def run_clustering_chi2_ext1(
             "--class-probability-path",
             f"{HADOOP_PATH}/temp-input/class-probability.txt",
         ],
-        f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
+        f"{HADOOP_PATH}/clustering-chi2-output/expected-values",
         True,
     )
     print("Calculated expected value")
@@ -98,7 +99,7 @@ def run_clustering_chi2_ext1(
             hdfs_item_file_path,
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
-        f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
+        f"{HADOOP_PATH}/clustering-chi2-output/observed-values",
         True,
     )
     print("Calculated observed value")
@@ -107,19 +108,19 @@ def run_clustering_chi2_ext1(
     run_mr_job_hadoop(
         ChiSquare,
         [
-            f"{HADOOP_PATH}/clustering-chi2-output/observed-value",
-            f"{HADOOP_PATH}/clustering-chi2-output/expected-value",
+            f"{HADOOP_PATH}/clustering-chi2-output/observed-values",
+            f"{HADOOP_PATH}/clustering-chi2-output/expected-values",
         ],
-        f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
+        f"{HADOOP_PATH}/clustering-chi2-output/chi2-values",
         True,
     )
     print("Calculated Chi2")
 
-    # Get max Chi2
+    # Get users with top M Chi2 values
     run_mr_job_hadoop(
         MNearestPoints,
         [
-            f"{HADOOP_PATH}/clustering-chi2-output/chi2-value",
+            f"{HADOOP_PATH}/clustering-chi2-output/chi2-values",
             "--M",
             str(number_of_clusters * number_of_multiplications),
             "--is-ascending",
@@ -128,21 +129,32 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         True,
     )
-    print("Got top Chi2")
+    print("Got users with top M Chi2 values")
 
-    # Create centroids
+    # Remove items from user-items matrix
+    run_mr_job_hadoop(
+        RemoveItemsFromMatrix,
+        [
+            f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
+        ],
+        f"{HADOOP_PATH}/clustering-chi2-output/matrix",
+        True,
+    )
+    print("Removed items from user-items matrix")
+
+    # Connect top M users with their ratings
     centroids = run_mr_job_hadoop(
         CreateCentroids,
         [
-            f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
+            f"{HADOOP_PATH}/clustering-chi2-output/matrix",
             f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/centroids",
         True,
     )
-    print("Created top M centroids")
+    print("Connected top M users with their ratings")
 
-    # Get max centroid
+    # Get max centroid id
     run_mr_job_hadoop(
         GetMax,
         [
@@ -151,7 +163,9 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2-centroid-id",
         True,
     )
+    print("Got max centroid id")
 
+    # Connect max centroid id with its ratings
     max_centroid = (
         run_mr_job_hadoop(
             CreateCentroids,
@@ -163,7 +177,7 @@ def run_clustering_chi2_ext1(
         .replace("\n", "")
         .split("\t")
     )
-    print("Got max centroid")
+    print("Connected max centroid id with its ratings")
 
     # Remove current centroid
     run_mr_job_hadoop(
@@ -176,13 +190,13 @@ def run_clustering_chi2_ext1(
         f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
         True,
     )
-    print("Removed centroid")
+    print("Removed current centroid")
 
     # Loop
     for i in range(number_of_clusters - 1):
-        print(f"\nLoop: {i}")
+        print(f"\nLoop centroid {i}")
 
-        # Calculate distance between current to others centroids
+        # Calculate the distances between the current centroid and others
         run_mr_job_hadoop(
             DistanceBetweenCentroids,
             [
@@ -191,18 +205,22 @@ def run_clustering_chi2_ext1(
                 max_centroid[1],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
+            True,
         )
-        print("Calculated distance between centroids")
+        print("Calculated the distances between the current centroid and others")
 
-        # Get highest centroid
+        # Get centroid id having the furthest distance
         run_mr_job_hadoop(
             GetMax,
             [
                 f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id-{i}",
+            True,
         )
+        print("Got centroid id having the furthest distance")
 
+        # Connect the furthest distance centroid id with its ratings
         max_centroid = (
             run_mr_job_hadoop(
                 CreateCentroids,
@@ -214,7 +232,7 @@ def run_clustering_chi2_ext1(
             .replace("\n", "")
             .split("\t")
         )
-        print("Got highest centroid")
+        print("Connected the furthest distance centroid id with its ratings")
 
         # Remove highest centroid
         run_mr_job_hadoop(
@@ -225,6 +243,7 @@ def run_clustering_chi2_ext1(
                 max_centroid[0],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i + 1}",
+            True,
         )
         print("Removed highest centroid")
 

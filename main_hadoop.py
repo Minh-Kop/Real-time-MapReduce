@@ -93,14 +93,14 @@ def split_files_by_label(input_file_path, num):
 
 
 if __name__ == "__main__":
-    input_file_path = "./input/input_file_1M.txt"
-    item_file_path = "input/items_1M.txt"
+    # input_file_path = "./input/input_file_1M.txt"
+    # item_file_path = "input/items_1M.txt"
 
     # input_file_path = "./input/input_file.txt"
     # item_file_path = "input/items.txt"
 
-    # input_file_path = "./input/input_file_test.txt"
-    # item_file_path = "input/items_test.txt"
+    input_file_path = "./input/input_file_t.txt"
+    item_file_path = "input/items_t.txt"
 
     hdfs_input_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(input_file_path)}"
     hdfs_item_file_path = f"{HADOOP_PATH}/input/{get_txt_filename(item_file_path)}"
@@ -128,9 +128,8 @@ if __name__ == "__main__":
     end_time = time.perf_counter()
 
     ## Calculate clustering elapsed time
-    print(
-        f"\nRunning clustering time: {end_time - start_time}s\n=============================================================\n"
-    )
+    print(f"\nRunning clustering time: {end_time - start_time}s")
+    print("\n=============================================================\n")
 
     ## Split input file
     split_files_by_label(input_file_path, num=num)
@@ -154,8 +153,8 @@ if __name__ == "__main__":
             ),
             "mfps-output",
         )
-
         mfps_result.append(result_data)
+
     mfps_result = [line for row in mfps_result for line in row]
 
     output_path = f"./hadoop_output/mfps.txt"
