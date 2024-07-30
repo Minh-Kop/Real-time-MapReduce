@@ -14,30 +14,31 @@ HADOOP_PATH = env_dict["hadoop_path"]
 def kmeans(i, clustering_folder, centroids):
     count = 0
     while True:
-        print(f"\nLoop {count}")
+        print(f"\nLoop K-means {count}")
 
         # Calculate distance between users and centroids
         run_mr_job_hadoop(
             DistanceBetweenUsersCentroid,
             [
-                f"{HADOOP_PATH}/{clustering_folder}/full-matrix",
+                f"{HADOOP_PATH}/{clustering_folder}/matrix",
                 "--centroids-path",
-                f"{HADOOP_PATH}/input/centroids-{i}.txt",
+                f"{HADOOP_PATH}/temp-input/centroids-{i}.txt",
                 "--return-centroid-id",
                 "True",
             ],
-            f"{HADOOP_PATH}/{clustering_folder}/full-matrix-{count}",
+            f"{HADOOP_PATH}/{clustering_folder}/matrix-{count}",
+            True,
         )
-        print("Calculate distance between users and centroids")
+        print("Calculated distance between users and centroids")
 
         # Update centroids
         updated_centroids = run_mr_job_hadoop(
             UpdateCentroids,
-            [f"{HADOOP_PATH}/{clustering_folder}/full-matrix-{count}"],
+            [f"{HADOOP_PATH}/{clustering_folder}/matrix-{count}"],
             f"{HADOOP_PATH}/{clustering_folder}/centroids-{i+1}",
             True,
         )
-        print("Update centroids")
+        print("Updated centroids")
 
         # Check if has converged
         updated_centroids_tuples = []
@@ -62,10 +63,10 @@ def kmeans(i, clustering_folder, centroids):
     # Assign labels
     run_mr_job_hadoop(
         Label,
-        [f"{HADOOP_PATH}/{clustering_folder}/full-matrix-{count}"],
+        [f"{HADOOP_PATH}/{clustering_folder}/matrix-{count}"],
         f"{HADOOP_PATH}/{clustering_folder}/labels",
         True,
     )
-    print("Assign labels")
+    print("Assigned labels")
 
     return i

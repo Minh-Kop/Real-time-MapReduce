@@ -8,22 +8,18 @@ class UpdateCentroids(MRJob):
 
     def mapper(self, _, line):
         _, value = line.strip().split("\t")
-        coordinate, centroid_id = value.split("&")
-        yield f"{centroid_id}", f"{coordinate}"
+        ratings, centroid_id = value.split("&")
+        yield centroid_id, ratings
 
-    def reducer(self, centroid_id, coordinates):
-        coordinates = [coordinate.strip().split("|") for coordinate in coordinates]
-        for index, coordinate in enumerate(coordinates):
-            coordinates[index] = [el.strip().split(";") for el in coordinate]
-        coordinates = np.array(coordinates, dtype="f")
+    def reducer(self, centroid_id, ratings_list):
+        ratings_list = list(ratings_list)
+        ratings_list = [ratings.split(";") for ratings in ratings_list]
+        ratings_list = np.array(ratings_list, dtype="f")
 
-        new_coordinate = np.mean(coordinates, axis=0)
+        new_centroid_ratings = np.mean(ratings_list, axis=0)
+        str_centroid_ratings = ";".join(new_centroid_ratings.astype(str, copy=True))
 
-        str_coordinate = ""
-        for el in new_coordinate:
-            str_coordinate += ";".join(el.astype(str, copy=True)) + "|"
-
-        yield f"{centroid_id}", f"{str_coordinate[:-1]}"
+        yield centroid_id, str_centroid_ratings
 
 
 if __name__ == "__main__":

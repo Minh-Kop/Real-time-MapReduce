@@ -15,18 +15,11 @@ class UserItemMatrix(MRJob):
         key = key.strip().split(";")
 
         if len(key) == 1:
-            value = value.strip().split("|")
-            if len(value) == 1:
-                yield key[0], value[0]
-            else:
-                avg_rating, flag = value
-                if flag == "a":
-                    yield key[0], avg_rating
-            return
-
-        user, item = key
-        rating = value.strip().split(";")[0]
-        yield user, f"{item};{rating}"
+            yield key[0], value
+        else:
+            user, item = key
+            rating = value.strip().split(";")[0]
+            yield user, f"{item};{rating}"
 
     def create_item_list(self, filename):
         items = []

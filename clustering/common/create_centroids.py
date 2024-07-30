@@ -14,7 +14,7 @@ class CreateCentroids(MRJob):
         if len(values) > 1:
             for value in values:
                 value = value.strip()
-                if len(value.split("|")) > 1:
+                if len(value.split(";")) > 1:
                     yield user, value
                     return
 
