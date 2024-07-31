@@ -192,7 +192,7 @@ def run_clustering_chi2_ext1(
     )
     print("Removed current centroid")
 
-    # Loop
+    # Loop to find centroids
     for i in range(number_of_clusters - 1):
         print(f"\nLoop centroid {i}")
 
@@ -201,7 +201,7 @@ def run_clustering_chi2_ext1(
             DistanceBetweenCentroids,
             [
                 f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i}",
-                "--centroid-coord",
+                "--centroid-ratings",
                 max_centroid[1],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",

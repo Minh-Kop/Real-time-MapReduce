@@ -16,7 +16,7 @@ class ObservedValue(MRJob):
             values = values.strip().split("|")
             for val in values:
                 item, rating = val.strip().split(";")
-                yield str(int(float(item))), f"{user};{rating}"
+                yield item, f"{user};{rating}"
 
     def add_label_to_user_reducer(self, item, values):
         values = list(values)
@@ -28,10 +28,10 @@ class ObservedValue(MRJob):
 
         for user_rating in values:
             user, rating = user_rating.split(";")
-            yield f"{label};{user}", rating
+            yield f"{user};{label}", rating
 
-    def calculate_observed_value_reducer(self, label_user, ratings):
-        label, user = label_user.strip().split(";")
+    def calculate_observed_value_reducer(self, user_label, ratings):
+        user, label = user_label.strip().split(";")
         ratings = np.array(list(ratings), dtype=float)
 
         sum_ratings = np.sum(ratings)
