@@ -19,23 +19,22 @@ class DistanceBetweenCentroids(MRJob):
     def reducer(self, user, coord):
         coord = list(coord)[0]
         centroid_coord = self.options.centroid_coord
-        if coord != centroid_coord:
-            coord_ = np.array(
-                [
-                    float(coord_.strip().split(";")[1])
-                    for coord_ in (coord.strip().split("|"))
-                ]
-            )
-            centroid_coord_ = np.array(
-                [
-                    float(centroid_coord_.strip().split(";")[1])
-                    for centroid_coord_ in (centroid_coord.strip().split("|"))
-                ]
-            )
+        coord_ = np.array(
+            [
+                float(coord_.strip().split(";")[1])
+                for coord_ in (coord.strip().split("|"))
+            ]
+        )
+        centroid_coord_ = np.array(
+            [
+                float(centroid_coord_.strip().split(";")[1])
+                for centroid_coord_ in (centroid_coord.strip().split("|"))
+            ]
+        )
 
-            dist = np.linalg.norm(centroid_coord_ - coord_)
+        dist = np.linalg.norm(centroid_coord_ - coord_)
 
-            yield user, f"{dist}"
+        yield user, f"{dist}"
 
 
 if __name__ == "__main__":
