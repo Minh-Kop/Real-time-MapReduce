@@ -26,7 +26,7 @@ class UserItemMatrix(MRJob):
         with open(filename, "r") as file:
             for line in file:
                 item = line.strip().split("\t")[0]
-                items.append(float(item))
+                items.append(int(float(item)))
         return items
 
     def reducer_init(self):

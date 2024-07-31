@@ -10,13 +10,13 @@ class RemoveCentroid(MRJob):
         self.add_passthru_arg("--centroid", help="Current centroid")
 
     def mapper(self, _, line):
-        user, coord = line.strip().split("\t")
+        user, ratings = line.strip().split("\t")
         if not (user == self.options.centroid):
-            yield user, coord
-        elif len(coord.strip().split("-")) == 1:
-            yield user, f"{coord}-c"
+            yield user, ratings
+        elif len(ratings.strip().split("-")) == 1:
+            yield user, f"{ratings}-c"
         else:
-            yield user, coord
+            yield user, ratings
 
 
 if __name__ == "__main__":
