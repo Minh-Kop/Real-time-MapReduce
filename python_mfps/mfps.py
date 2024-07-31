@@ -97,6 +97,16 @@ def run_mfps(data_df):
     ## 1 user per time
     ## get user list
     user_list = data_df["user"].unique()
+    if len(user_list) == 1:
+        data = {
+            "user": [user_list[0]],
+            "mfps": [1],
+        }
+
+        # Create a DataFrame
+        df = pd.DataFrame(data)
+        return df
+
     for i in user_list:
         join_data_df = data_df[data_df["user"] == i].merge(
             data_df, how="cross", suffixes=("", "_")
@@ -153,4 +163,5 @@ def run_mfps(data_df):
         )
         # print(f"MFPS: User-{i} successfully")
 
+    # print(full_data_df)
     return full_data_df

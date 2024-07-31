@@ -1,2 +1,6 @@
-mfps: 3084.792454481125 s
-mfps + clustering_ext1: 1093.9765071868896 s
+100k
+mfps: 3084.792454481125s
+mfps + clustering_ext1: A65071868896s
+
+1M
+mfps + clustering_ext1: 51439.66162109375s
