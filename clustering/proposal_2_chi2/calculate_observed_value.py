@@ -28,10 +28,10 @@ class ObservedValue(MRJob):
 
         for user_rating in values:
             user, rating = user_rating.split(";")
-            yield f"{label};{user}", rating
+            yield f"{user};{label}", rating
 
     def calculate_observed_value_reducer(self, label_user, ratings):
-        label, user = label_user.strip().split(";")
+        user, label = label_user.strip().split(";")
         ratings = np.array(list(ratings), dtype=float)
 
         sum_ratings = np.sum(ratings)
