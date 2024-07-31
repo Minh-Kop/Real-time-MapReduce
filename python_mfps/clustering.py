@@ -54,10 +54,6 @@ def run_clustering(data_df, item_df, nCluster, multiplier):
         {"Feature": ui_matrix_df.columns, "Chi2 Score": chi2_scores}
     ).sort_values(by="Chi2 Score", ascending=False)
 
-    print("Selected features:", selected_features)
-    print("\nChi2 scores for all features:")
-    print(feature_scores)
-
     index_of_highest_chi2 = selected_indices[np.argmax(chi2_scores[selected_indices])]
     highest_chi2_user = ui_matrix_df.columns[index_of_highest_chi2]
     # print(f"User with highest chi2 score among selected features: {highest_chi2_user}")
@@ -118,7 +114,7 @@ def run_clustering(data_df, item_df, nCluster, multiplier):
     i = 0
     # Kmeans
     while True:
-        print(f"Kmeans loop: {i}")
+        # print(f"Kmeans loop: {i}")
         i += 1
         users_df["centroid"] = users_df.apply(
             lambda row: centroid_labeling(row["rating"], current_centroids_df.copy()),

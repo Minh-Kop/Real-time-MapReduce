@@ -8,10 +8,12 @@ from python_mfps.clustering import run_clustering
 if __name__ == "__main__":
     nCluster = 3  # to calculate top user for clustering
     multiplier = 10
-    start = time.time()
+    start_clustering = time.time()
+    input_path = "input_file.txt"
+    item_path = "items.txt"
 
     # Prepare data
-    data_df = pd.read_csv("./input/input_file_1M.txt", sep="\t", names=["key", "value"])
+    data_df = pd.read_csv(f"./input/{input_path}", sep="\t", names=["key", "value"])
     data_df[["user", "item"]] = data_df["key"].str.split(";", expand=True)
     data_df[["rating", "time"]] = data_df["value"].str.split(";", expand=True)
 
@@ -19,7 +21,7 @@ if __name__ == "__main__":
     data_df.drop(["key", "value"], axis=1, inplace=True)
     data_df.sort_values(by=["user", "item"], inplace=True)
     item_df = pd.read_csv(
-        "./input/items_1M.txt", sep="\t", names=["item", "categories"]
+        f"./input/{item_path}", sep="\t", names=["item", "categories"]
     )
 
     item_df = data_df["item"].to_frame().merge(item_df, on="item")
@@ -89,10 +91,13 @@ if __name__ == "__main__":
     user_df = run_clustering(data_df, item_df, nCluster, multiplier)
     user_df.to_csv("./python_mfps/output/labeling.csv", index=False)
     centroid_list = user_df["centroid"].unique().tolist()
+    end_clustering = time.time()
+    print(f"CLustering runtime:{end_clustering - start_clustering}")
+    start_mfps = time.time()
 
     # run mfps
     for i in range(nCluster):
-        print(f"MFPS loop: {i + 1}")
+        # print(f"MFPS loop: {i + 1}")
         mfps_data_df = user_df[user_df["centroid"] == centroid_list[i]]
 
         with open(f"./python_mfps/output/cluster{i + 1}", "w") as file:
@@ -105,5 +110,8 @@ if __name__ == "__main__":
         mfps_result = run_mfps(mfps_data_df)
         mfps_result.to_csv(f"./python_mfps/output/sim_{i + 1}.csv")
 
-    end = time.time()
-    print(f"Runtime: {end - start}")
+    end_mfps = time.time()
+    print(f"MFPS runtime: {end_mfps - start_mfps}")
+    print(
+        f"Total run time: {(end_clustering - start_clustering) + (end_mfps - start_mfps)}"
+    )
