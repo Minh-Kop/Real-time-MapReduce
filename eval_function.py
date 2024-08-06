@@ -213,12 +213,6 @@ def evaluate(
 
 
 if __name__ == "__main__":
-    source_file_path = "./input/u.data"
-    item_file_path = "./input/u.item"
-    all_user_path = "./input/input_file_copy.txt"
-    test_file_path = "./input/test_input.txt"
-    train_file_path = "./input/train_input.txt"
-
     train_file_path = "./input/train_input.txt"
     test_file_path = "./input/test_input.txt"
     sim_path = "./hadoop_output/mfps.txt"
