@@ -84,7 +84,7 @@ def run_clustering_chi2_ext1(
         ExpectedValue,
         [
             f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
-            "--class-probability-path",
+            "--categories-probability-path",
             f"{HADOOP_PATH}/temp-input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-values",

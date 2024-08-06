@@ -9,7 +9,8 @@ class ExpectedValue(MRJob):
     def configure_args(self):
         super(ExpectedValue, self).configure_args()
         self.add_file_arg(
-            "--class-probability-path", help="Path to the class probability file"
+            "--categories-probability-path",
+            help="Path to the categories probability file",
         )
 
     def mapper(self, _, line):
@@ -19,17 +20,17 @@ class ExpectedValue(MRJob):
             yield user, value
 
     def reducer_init(self):
-        class_probabilities_path = self.options.class_probability_path
+        categories_probability_path = self.options.categories_probability_path
         self.class_probabilities = pd.read_csv(
-            class_probabilities_path, sep="\t", names=["label", "probability"]
+            categories_probability_path, sep="\t", names=["categories", "probability"]
         )
 
     def reducer(self, user, sum):
         sum = float(list(sum)[0])
 
-        for label, probability in self.class_probabilities.itertuples(index=False):
+        for categories, probability in self.class_probabilities.itertuples(index=False):
             expected_value = sum * probability
-            yield f"{user};{label}", f"{expected_value}|e"
+            yield f"{user};{categories}", f"{expected_value}|e"
 
 
 if __name__ == "__main__":

@@ -54,7 +54,7 @@ result_data = run_mr_job(
     ExpectedValue,
     [
         "./clustering/proposal_2_chi2/output/avg_sum.txt",
-        "--class-probability-path",
+        "--categories-probability-path",
         "./clustering/proposal_2_chi2/output/class_probability.txt",
     ],
 )
