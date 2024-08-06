@@ -11,7 +11,8 @@ file_B = "./input/user_item_matrix copy.txt"
 
 # Define k
 k = 3  # Number of highest values to select
-noItem = '7'
+noItem = "7"
+
 
 def run_mr_job(mr_job_class, input_args):
     mr_job = mr_job_class(args=input_args)
@@ -29,11 +30,14 @@ def write_data_to_file(filename, data, mode="w"):
         output_file.writelines(el)
     output_file.close()
 
+
 result_data = run_mr_job(AvgAndSum, ["./input/input_file_copy.txt", "--n", noItem])
 write_data_to_file("./clustering/proposal_2_chi2/output/avg_sum.txt", result_data)
 
 result_data = run_mr_job(ClassProbability, ["./input/items_copy.txt", "--n", noItem])
-write_data_to_file("./clustering/proposal_2_chi2/output/class_probability.txt", result_data)
+write_data_to_file(
+    "./clustering/proposal_2_chi2/output/class_probability.txt", result_data
+)
 
 result_data = run_mr_job(
     ObservedValue,
@@ -45,7 +49,7 @@ result_data = run_mr_job(
     ExpectedValue,
     [
         "./clustering/proposal_2_chi2/output/avg_sum.txt",
-        "--class-probability-path",
+        "--categories-probability-path",
         "./clustering/proposal_2_chi2/output/class_probability.txt",
     ],
 )
@@ -59,7 +63,6 @@ result_data = run_mr_job(
     ],
 )
 write_data_to_file("./clustering/proposal_2_chi2/output/chi2.txt", result_data)
-
 
 
 # Read data from file A into a pandas DataFrame
@@ -81,9 +84,9 @@ sorted_merged_df = merged_df.sort_values(by="value_x", ascending=False).head(k)
 corresponding_values = sorted_merged_df[["key", "value_y"]].values.tolist()
 
 # Write new centroids to file
-with open('./clustering/proposal_2_chi2/output/centroids.txt','w') as file:
+with open("./clustering/proposal_2_chi2/output/centroids.txt", "w") as file:
     for i in corresponding_values:
         file.writelines(f"{i[0]}\t{i[1]}\n")
-        i[1] = [float(coor.strip().split(';')[1] )for coor in (i[1].strip().split('|'))]
+        i[1] = [float(coor.strip().split(";")[1]) for coor in (i[1].strip().split("|"))]
 
 print(corresponding_values)
