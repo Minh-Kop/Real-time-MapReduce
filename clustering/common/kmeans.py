@@ -45,10 +45,10 @@ def kmeans(i, clustering_folder, centroids):
         centroids_tuples = []
         for line in updated_centroids:
             _, value = line.strip().split("\t")
-            updated_centroids_tuples.append(value.strip())
+            updated_centroids_tuples.append(tuple(value.strip().split("|")))
         for line in centroids:
             _, value = line.strip().split("\t")
-            centroids_tuples.append(value.strip())
+            centroids_tuples.append(tuple(value.strip().split("|")))
 
         updated_centroids_tuples = tuple(updated_centroids_tuples)
         centroids_tuples = tuple(centroids_tuples)

@@ -84,7 +84,7 @@ def run_clustering_chi2_ext1(
         ExpectedValue,
         [
             f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
-            "--categories-probability-path",
+            "--class-probability-path",
             f"{HADOOP_PATH}/temp-input/class-probability.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-values",
@@ -192,7 +192,7 @@ def run_clustering_chi2_ext1(
     )
     print("Removed current centroid")
 
-    # Loop to find centroids
+    # Loop
     for i in range(number_of_clusters - 1):
         print(f"\nLoop centroid {i}")
 
@@ -201,7 +201,7 @@ def run_clustering_chi2_ext1(
             DistanceBetweenCentroids,
             [
                 f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i}",
-                "--centroid-ratings",
+                "--centroid-coord",
                 max_centroid[1],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
