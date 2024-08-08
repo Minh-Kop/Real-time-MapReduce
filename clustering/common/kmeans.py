@@ -27,7 +27,6 @@ def kmeans(i, clustering_folder, centroids):
                 "True",
             ],
             f"{HADOOP_PATH}/{clustering_folder}/matrix-{count}",
-            True,
         )
         print("Calculated distance between users and centroids")
 

@@ -43,7 +43,6 @@ def run_clustering_chi2_ext1(
         AvgAndSum,
         [input_file_path, "--n", str(number_of_items)],
         f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
-        True,
     )
     print("Calculated average rating and sum rating of each user")
 
@@ -66,7 +65,6 @@ def run_clustering_chi2_ext1(
             hdfs_item_file_path,
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
-        True,
     )
     print("Created user-items matrix")
 
@@ -74,7 +72,7 @@ def run_clustering_chi2_ext1(
     run_mr_job_hadoop(
         ClassProbability,
         [hdfs_item_file_path, "--n", str(number_of_items)],
-        f"{HADOOP_PATH}/clustering-chi2-output/class-probability",
+        f"{HADOOP_PATH}/clustering-chi2-output/categories-probabilities",
         True,
     )
     print("Calculated class probability")
@@ -85,10 +83,9 @@ def run_clustering_chi2_ext1(
         [
             f"{HADOOP_PATH}/clustering-chi2-output/avg-sum",
             "--categories-probability-path",
-            f"{HADOOP_PATH}/temp-input/class-probability.txt",
+            f"{HADOOP_PATH}/temp-input/categories-probabilities.txt",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/expected-values",
-        True,
     )
     print("Calculated expected value")
 
@@ -100,7 +97,6 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/observed-values",
-        True,
     )
     print("Calculated observed value")
 
@@ -112,7 +108,6 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/expected-values",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/chi2-values",
-        True,
     )
     print("Calculated Chi2")
 
@@ -127,7 +122,6 @@ def run_clustering_chi2_ext1(
             str(0),
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
-        True,
     )
     print("Got users with top M Chi2 values")
 
@@ -138,7 +132,6 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/full-matrix",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/matrix",
-        True,
     )
     print("Removed items from user-items matrix")
 
@@ -150,7 +143,6 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/centroids",
-        True,
     )
     print("Connected top M users with their ratings")
 
@@ -161,7 +153,6 @@ def run_clustering_chi2_ext1(
             f"{HADOOP_PATH}/clustering-chi2-output/top-chi2",
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/top-chi2-centroid-id",
-        True,
     )
     print("Got max centroid id")
 
@@ -188,7 +179,6 @@ def run_clustering_chi2_ext1(
             max_centroid[0],
         ],
         f"{HADOOP_PATH}/clustering-chi2-output/centroids-0",
-        True,
     )
     print("Removed current centroid")
 
@@ -205,7 +195,6 @@ def run_clustering_chi2_ext1(
                 max_centroid[1],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
-            True,
         )
         print("Calculated the distances between the current centroid and others")
 
@@ -216,7 +205,6 @@ def run_clustering_chi2_ext1(
                 f"{HADOOP_PATH}/clustering-chi2-output/distances-{i}",
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/top-centroid-id-{i}",
-            True,
         )
         print("Got centroid id having the furthest distance")
 
@@ -243,7 +231,6 @@ def run_clustering_chi2_ext1(
                 max_centroid[0],
             ],
             f"{HADOOP_PATH}/clustering-chi2-output/centroids-{i + 1}",
-            True,
         )
         print("Removed highest centroid")
 
