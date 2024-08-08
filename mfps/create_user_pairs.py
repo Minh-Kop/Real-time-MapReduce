@@ -31,11 +31,11 @@ class CreateUserPairs(MRJob):
 
 
 if __name__ == "__main__":
-    #     import sys
-    #
-    #     sys.argv[1:] = [
-    #         "input/avg_ratings_2.txt",
-    #         "--users-path",
-    #         "input/avg_ratings_2.txt",
-    #     ]
+#     import sys
+# 
+#     sys.argv[1:] = [
+#         "input/avg_ratings_2.txt",
+#         "--users-path",
+#         "input/avg_ratings_2.txt",
+#     ]
     CreateUserPairs().run()

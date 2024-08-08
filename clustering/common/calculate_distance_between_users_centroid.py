@@ -15,7 +15,7 @@ class DistanceBetweenUsersCentroid(MRJob):
 
     def mapper(self, _, line):
         user, value = line.strip().split("\t")
-        yield user, value
+        yield f"{user}", f"{value}"
 
     def get_centroid_df(self, filename):
         df = pd.read_csv(filename, sep="\t", names=["user", "ratings"])

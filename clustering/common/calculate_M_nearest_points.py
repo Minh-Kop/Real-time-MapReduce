@@ -66,7 +66,7 @@ class MNearestPoints(MRJob):
 
 
 if __name__ == "__main__":
-    # import sys
+    import sys
 
     # M = 2
     # sys.argv[1:] = [
