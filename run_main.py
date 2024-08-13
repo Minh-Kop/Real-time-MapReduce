@@ -95,6 +95,8 @@ if __name__ == "__main__":
     print(f"CLustering runtime:{end_clustering - start_clustering}")
     start_mfps = time.time()
 
+    a = pd.DataFrame()
+    
     # run mfps
     for i in range(nCluster):
         # print(f"MFPS loop: {i + 1}")
@@ -108,10 +110,23 @@ if __name__ == "__main__":
         mfps_data_df.drop("centroid", axis=1, inplace=True)
 
         mfps_result = run_mfps(mfps_data_df)
-        mfps_result.to_csv(f"./python_mfps/output/sim_{i + 1}.csv")
+
+        mfps_result["user_user"] = (
+            mfps_result["user"].astype(str) + ";" + mfps_result["user_"].astype(str)
+        )
+        
+        mfps_result.drop(
+            ["ru", "rc", "rd", "rt", "user", "user_"], axis=1, inplace=True
+        )
+        a = pd.concat([a, mfps_result])
+        mfps_result.to_csv(
+            f"./python_mfps/output/sim_{i + 1}.csv", index=False, header=False, sep="\t"
+        )
+
 
     end_mfps = time.time()
     print(f"MFPS runtime: {end_mfps - start_mfps}")
+    a[['user_user','mfps']].to_csv(f"./python_mfps/output/sim.txt", index=False, header=False, sep="\t")
     print(
         f"Total run time: {(end_clustering - start_clustering) + (end_mfps - start_mfps)}"
     )
