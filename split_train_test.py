@@ -44,6 +44,20 @@ item_file_test_df = pd.DataFrame(item_test_df["item"].unique(), columns=["item"]
     item_df, on="item"
 )
 
+item_file_train_df["saved"] = (
+    item_file_train_df["item"].astype(str)
+    + "\t"
+    + item_file_train_df["categories"].astype(str)
+)
+item_file_test_df["saved"] = (
+    item_file_test_df["item"].astype(str)
+    + "\t"
+    + item_file_test_df["categories"].astype(str)
+)
+
+item_file_train_df.drop(["item", "categories"], axis=1, inplace=True)
+item_file_test_df.drop(["item", "categories"], axis=1, inplace=True)
+
 # save train_input and test_input
 input_file_train_df.to_csv(input_train_path, index=False, header=False)
 input_file_test_df.to_csv(input_test_path, index=False, header=False)
