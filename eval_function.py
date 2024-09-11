@@ -1,25 +1,22 @@
-import os
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
 
-pd.options.mode.chained_assignment = None  # default='warn'
 
+def split_train_test(
+    input_path, train_set_path, test_set_path, test_size=0.3, random_state=40
+):
+    # Load the data
+    data = pd.read_csv(input_path)
 
-def split_test_train(source_path, train_path, test_path, ratio=0.8):
-    if not os.path.exists(source_path):
-        return
+    # Split the data into training and testing sets
+    train_set, test_set = train_test_split(
+        data, test_size=test_size, random_state=random_state
+    )
 
-    if os.path.exists(test_path) or os.path.exists(train_path):
-        with open(train_path, "w"), open(test_path, "w"):
-            pass
-
-    with open(source_path, "r") as src_file, open(test_path, "a") as test_file, open(
-        train_path, "a"
-    ) as train_file:
-        lines = src_file.readlines()
-        ratio_index = int(len(lines) * ratio)
-        train_file.writelines(lines[:ratio_index])
-        test_file.writelines(lines[ratio_index:])
+    # Save the split data to new files if needed
+    train_set.to_csv(train_set_path, index=False)
+    test_set.to_csv(test_set_path, index=False)
 
 
 def evaluate(
@@ -213,16 +210,24 @@ def evaluate(
 
 
 if __name__ == "__main__":
-    source_file_path = "./input/u.data"
-    item_file_path = "./input/u.item"
-    all_user_path = "./input/input_file_copy.txt"
-    test_file_path = "./input/test_input.txt"
-    train_file_path = "./input/train_input.txt"
+    # input_path = "input/input_file_100k.txt"
+    # train_file_path = "input/train_set_100k.txt"
+    # test_file_path = "input/test_set_100k.txt"
+    # sim_path = "hadoop_output/mfps_100k.txt"
+    # avg_file_path = "hadoop_output/avg-ratings-100k.txt"
 
-    train_file_path = "./input/train_input.txt"
-    test_file_path = "./input/test_input.txt"
-    sim_path = "./hadoop_output/mfps.txt"
-    avg_file_path = "./hadoop_output/avg-ratings.txt"
+    input_path = "input/input_file_1M.txt"
+    train_file_path = "input/train_set_1m.txt"
+    test_file_path = "input/test_set_1m.txt"
+    sim_path = "hadoop_output/mfps_1m_4.txt"
+    avg_file_path = "hadoop_output/avg-ratings-1m.txt"
+
+    split_train_test(
+        input_path=input_path,
+        train_set_path=train_file_path,
+        test_set_path=test_file_path,
+        random_state=42,
+    )
 
     RMSE, F1 = evaluate(
         sim_path, train_file_path, test_file_path, avg_file_path, 10, None

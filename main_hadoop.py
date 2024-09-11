@@ -93,11 +93,14 @@ def split_files_by_label(input_file_path, num):
 
 
 if __name__ == "__main__":
-    # input_file_path = "./input/input_file_1M.txt"
+    # input_file_path = "input/input_file_1M.txt"
     # item_file_path = "input/items_1M.txt"
 
-    # input_file_path = "./input/input_file.txt"
-    # item_file_path = "input/items.txt"
+    # input_file_path = "./input/input_file_10M.txt"
+    # item_file_path = "input/items_10M.txt"
+
+    # input_file_path = "./input/input_file_100k.txt"
+    # item_file_path = "input/items_100k.txt"
 
     input_file_path = "./input/input_file_t.txt"
     item_file_path = "input/items_t.txt"
@@ -119,7 +122,7 @@ if __name__ == "__main__":
             item_file_path,
             hdfs_item_file_path,
             NUMBER_OF_CLUSTERS,
-            MULTIPLIER,
+            number_of_multiplications=MULTIPLIER,
         ),
         "clustering-chi2-output",
     )
@@ -157,7 +160,8 @@ if __name__ == "__main__":
 
     mfps_result = [line for row in mfps_result for line in row]
 
-    output_path = f"./hadoop_output/mfps.txt"
+    # output_path = f"./hadoop_output/mfps_1m.txt"k
+    output_path = f"./hadoop_output/mfps_100k.txt"
     write_data_to_file(output_path, mfps_result)
 
     ## End MFPS timer
