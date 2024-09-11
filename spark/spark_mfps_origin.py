@@ -27,9 +27,11 @@ def run_mfps(input_file_path, output_path, alpha=10**-6):
     spark_config = (
         SparkConf()
         .setAppName("MFPS")
-        .set("spark.driver.memory", "8g")
-        .set("spark.driver.maxResultSize", "4g")
-        .set("spark.executor.memory", "8g")
+        .set("spark.driver.memory", "5g")
+        .set("spark.executor.memory", "7g")
+        .set("spark.sql.shuffle.partitions", 8)
+        .set("spark.executor.cores", 4)
+        # .set("spark.executor.memory", "8g")
         # .set("spark.hadoop.fs.defaultFS", "file:///")
     )
     spark = SparkSession.builder.config(conf=spark_config).getOrCreate()
@@ -228,10 +230,11 @@ def run_mfps(input_file_path, output_path, alpha=10**-6):
     ## Save to file
     temp_df.write.mode("append").save(output_path)
 
+
 if __name__ == "__main__":
-    # input_file_path = "input/input_file.txt"
-    input_file_path = "input/input_file_copy.txt"
-    output_path = "output/mfps_"
+    input_file_path = "spark/input/input_file.txt"
+    # input_file_path = "spark/input/input_file_t.txt"
+    output_path = "spark/output/mfps"
 
     import time
 

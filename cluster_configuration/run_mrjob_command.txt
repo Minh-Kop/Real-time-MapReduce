@@ -75,6 +75,8 @@ ssh mackop@192.168.1.7
 ssh-copy-id hoang@10.123.1.130 # Important to login without password
 
 ssh mac@192.168.1.5
+
 sftp mac@192.168.1.5
+put -r hadoop/ /home/mackop/hadoop/etc
 
 hadoop fs -getmerge clustering-chi2-output/avg-ratings merge.txt
